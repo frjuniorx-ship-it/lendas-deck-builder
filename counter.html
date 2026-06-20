@@ -104,13 +104,9 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
     <button class="chev" id="p0-chev" onclick="setTurn(0)">❯❯</button>
     <div class="delta" id="p0-delta"></div>
     <div class="pc-row">
-      <button class="pc-btn"
-        onmousedown="hold(0,1)"  onmouseup="stopHold"  onmouseleave="stopHold"
-        ontouchstart="hold(0,1)" ontouchend="stopHold" ontouchcancel="stopHold">+</button>
+      <button class="pc-btn" onclick="changePC(0,1)">+</button>
       <span class="pc-num" id="p0-num">20</span>
-      <button class="pc-btn"
-        onmousedown="hold(0,-1)"  onmouseup="stopHold"  onmouseleave="stopHold"
-        ontouchstart="hold(0,-1)" ontouchend="stopHold" ontouchcancel="stopHold">−</button>
+      <button class="pc-btn" onclick="changePC(0,-1)">−</button>
     </div>
     <div class="timer" id="p0-timer">02:00</div>
   </div>
@@ -129,13 +125,9 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
     <button class="chev on" id="p1-chev" onclick="setTurn(1)">❯❯</button>
     <div class="delta" id="p1-delta"></div>
     <div class="pc-row">
-      <button class="pc-btn"
-        onmousedown="hold(1,1)"  onmouseup="stopHold"  onmouseleave="stopHold"
-        ontouchstart="hold(1,1)" ontouchend="stopHold" ontouchcancel="stopHold">+</button>
+      <button class="pc-btn" onclick="changePC(1,1)">+</button>
       <span class="pc-num" id="p1-num">20</span>
-      <button class="pc-btn"
-        onmousedown="hold(1,-1)"  onmouseup="stopHold"  onmouseleave="stopHold"
-        ontouchstart="hold(1,-1)" ontouchend="stopHold" ontouchcancel="stopHold">−</button>
+      <button class="pc-btn" onclick="changePC(1,-1)">−</button>
     </div>
     <div class="timer" id="p1-timer">02:00</div>
   </div>
@@ -158,7 +150,7 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
 let cfg = { startPc: 20, useTimer: true };
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let players, tickId, holdTimerId, holdIntId;
+let players, tickId;
 
 function initPlayers() {
   players = [0, 1].map(() => ({
@@ -285,17 +277,6 @@ function changePC(idx, delta) {
   }, 2000);
 }
 
-// Hold-to-repeat
-function hold(idx, delta) {
-  changePC(idx, delta);
-  holdTimerId = setTimeout(() => {
-    holdIntId = setInterval(() => changePC(idx, delta), 90);
-  }, 450);
-}
-function stopHold() {
-  clearTimeout(holdTimerId);
-  clearInterval(holdIntId);
-}
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
 function openModal()  { document.getElementById('modal').style.display = 'flex'; }
