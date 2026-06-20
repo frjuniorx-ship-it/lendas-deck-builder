@@ -933,6 +933,8 @@ async function init(){
 
     // normApi: strip everything except a-z0-9 (handles hyphens, dots, spaces)
     const normApi=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+    // Aliases: lb-data normalized name → alternative API normalized name to try
+    const ALIASES={'passarofogo':'passarodofogo','aflordomandacaru':'flordomandacaru','djoaoiii':'domjoaoiii'};
     const byNorm={}, byNumId={};
     apiCards.forEach(ac=>{
       if(ac.nome) byNorm[normApi(ac.nome)]=ac;
@@ -944,7 +946,8 @@ async function init(){
       // Name match first (handles API name variants like hyphens vs spaces)
       // byNumId fallback ONLY for col 1 (ids 1-60): numero_id = c.id there
       // Col 2 (ids 61-125) must NOT use byNumId — their numero_id restarts at 1 in the API
-      const apiData=byNorm[normApi(c.nome)]||(c.id<=60?byNumId[String(c.id)]:null);
+      const nn=normApi(c.nome);
+      const apiData=byNorm[nn]||byNorm[ALIASES[nn]]||(c.id<=60?byNumId[String(c.id)]:null);
       if(apiData&&apiData.imagem_url){
         c.imagem_url=apiData.imagem_url;
         if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
