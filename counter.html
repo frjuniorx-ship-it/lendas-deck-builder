@@ -85,6 +85,24 @@ html,body{height:100%;overflow:hidden;background:#0b0c2e;color:#bea356;font-fami
 #g4-center img{width:32px;height:32px;object-fit:contain}
 #g4-center-fb{font-size:18px;color:var(--gold2);display:none}
 
+/* ── Responsive ── */
+/* Setup: reduz tamanho para caber na tela em celulares */
+@media(max-height:740px){
+  #s-setup{gap:9px;padding:44px 20px 14px}
+  .setup-eye{width:34px;height:34px}
+  .setup-title{font-size:clamp(11px,2.8vw,13px);max-width:280px}
+  .preset-grid{gap:7px;width:min(260px,82vw)}
+  .preset-btn{font-size:clamp(26px,7vw,40px)}
+  .play-btn{padding:11px 44px;font-size:15px;margin-top:0}
+  .custom-row,.players-row,.timer-row{font-size:10px}
+}
+/* Game 2P: reduz gap para não cortar elementos na base */
+@media(max-height:740px){
+  .parea{gap:clamp(4px,1vh,10px)}
+  .pc-num{font-size:clamp(56px,14vw,88px)}
+  .delta{height:22px;font-size:clamp(14px,3.5vw,22px)}
+}
+
 /* ── MODAL ── */
 #modal{display:none;position:fixed;inset:0;background:rgba(5,6,20,.88);align-items:center;justify-content:center;z-index:99}
 .modal-box{background:var(--bg2);border:1.5px solid var(--gold);border-radius:14px;padding:26px 28px;text-align:center;max-width:280px;width:90%}

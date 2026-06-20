@@ -590,8 +590,10 @@ function renderBuilder(){
   const showDeck=!isMobile||s.tab==='deck';
   document.getElementById('tabs').style.display=isMobile?'flex':'none';
   document.getElementById('cat-pane').style.display=showCat?'flex':'none';
-  document.getElementById('deck-pane').style.display=showDeck?'flex':'none';
-  document.getElementById('deck-pane').style.width=isMobile?'auto':'400px';
+  const dp=document.getElementById('deck-pane');
+  dp.style.display=showDeck?'flex':'none';
+  dp.style.width=isMobile?'100%':'400px';
+  dp.style.flex=isMobile?'1':'none';
 
   if(showCat){ renderFilters(); renderStats(); renderCatalog(); }
   if(showDeck){ renderDeckPanel(); }
