@@ -931,13 +931,20 @@ async function init(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const apiCards=await res.json();
 
-    // Match por nome normalizado — único método confiável para coleção 2
-    const byNorm={};
-    apiCards.forEach(ac=>{ if(ac.nome) byNorm[norm(ac.nome)]=ac; });
+    // normApi: strip everything except a-z0-9 (handles hyphens, dots, spaces)
+    const normApi=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+    const byNorm={}, byNumId={};
+    apiCards.forEach(ac=>{
+      if(ac.nome) byNorm[normApi(ac.nome)]=ac;
+      if(ac.numero_id!=null) byNumId[String(ac.numero_id)]=ac;
+    });
 
     let filled=0; const unmatched=[];
     cards.forEach(c=>{
-      const apiData=byNorm[norm(c.nome)];
+      // Name match first (handles API name variants like hyphens vs spaces)
+      // byNumId fallback ONLY for col 1 (ids 1-60): numero_id = c.id there
+      // Col 2 (ids 61-125) must NOT use byNumId — their numero_id restarts at 1 in the API
+      const apiData=byNorm[normApi(c.nome)]||(c.id<=60?byNumId[String(c.id)]:null);
       if(apiData&&apiData.imagem_url){
         c.imagem_url=apiData.imagem_url;
         if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
@@ -955,11 +962,15 @@ async function init(){
       const res=await fetch('https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas');
       if(!res.ok) throw new Error('HTTP '+res.status);
       const apiCards=await res.json();
-      const byNorm2={};
-      apiCards.forEach(ac=>{ if(ac.nome) byNorm2[norm(ac.nome)]=ac; });
+      const normApi2=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+      const byNorm2={}, byNumId2={};
+      apiCards.forEach(ac=>{
+        if(ac.nome) byNorm2[normApi2(ac.nome)]=ac;
+        if(ac.numero_id!=null) byNumId2[String(ac.numero_id)]=ac;
+      });
       let filled=0;
       cards.forEach(c=>{
-        const apiData=byNorm2[norm(c.nome)];
+        const apiData=byNorm2[normApi2(c.nome)]||(c.id<=60?byNumId2[String(c.id)]:null);
         if(apiData&&apiData.imagem_url){ c.imagem_url=apiData.imagem_url; if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url; filled++; }
       });
       console.log('Imagens API (www): '+filled+'/'+cards.length+' casadas.');
