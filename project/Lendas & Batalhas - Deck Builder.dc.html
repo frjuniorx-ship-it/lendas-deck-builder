@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Archivo:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#2c2f6b;border-radius:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  input::placeholder,textarea::placeholder{color:#6a6d9c}
+</style>
+</helmet>
+<div data-screen-label="App" style="--bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;--line:#2c2f6b;--text:#ece3d0;--muted:#9698c4;--gold:{{ corOuro }};--red:{{ corPauBrasil }};height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans-serif">
+
+  <header style="flex: none; display: flex; align-items: center; gap: 14px; padding: 11px 20px; border-bottom: 1px solid var(--line); background-color: #0e0f37">
+    <div onClick="{{ goHome }}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+      <div style="width:38px;height:38px;border-radius:8px;background:linear-gradient(145deg,var(--gold,#c79a48),var(--red,#b14a3c));display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:#1a130a;box-shadow:0 2px 6px rgba(0,0,0,.35)">L&amp;B</div>
+      <div style="line-height:1.08">
+        <div style="font-family: 'Cinzel',serif; font-weight: 700; font-size: 15px; letter-spacing: .05em; color: #bea356">LENDAS &amp; BATALHAS</div>
+        <div style="font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #ece3d0">Deck Builder</div>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--muted)">
+        <span style="font-family:'Cinzel',serif;font-size:19px;font-weight:700;color:{{ legalColor }}">{{ deckTotal }}</span>
+        <span>/ {{ maxDeck }} cartas</span>
+      </div>
+    </sc-if>
+  </header>
+
+  <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px">Carregando catálogo…</div>
+  </sc-if>
+
+  <!-- ===================== HOME ===================== -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Meus Baralhos" style="flex: 1; overflow-y: auto; background-color: #121342">
+    <div style="max-width:1080px;margin:0 auto;padding:30px 22px 70px">
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+        <h1 style="font-family: 'Cinzel',serif; font-weight: 700; font-size: 29px; margin: 0; color: #bea356">Meus Baralhos</h1>
+        <div style="flex:1"></div>
+        <button onClick="{{ openImport }}" style="background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px 15px; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; border-color: #bea356">Importar lista</button>
+        <button onClick="{{ newDeck }}" style="color: #1a130a; border: none; border-radius: 8px; padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; background-color: #bea356; white-space: nowrap">+ Novo baralho</button>
+      </div>
+      <p style="color: #ece3d0; font-size: 13px; margin: 8px 0 24px">Monte e organize seus baralhos. Mínimo de 40 e máximo de 80 cartas por baralho.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px">
+        <sc-for list="{{ decks }}" as="d" hint-placeholder-count="6">
+          <div onClick="{{ d.onOpen }}" style="border: 1px solid var(--line); border-radius: 12px; padding: 15px 16px; cursor: pointer; background-color: #0e0f37; border-color: #bea356" style-hover="border-color:var(--gold,#c79a48)">
+            <div style="display:flex;align-items:flex-start;gap:8px">
+              <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px">
+                <h3 style="font-family:'Cinzel',serif;font-weight:600;font-size:17px;margin:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ d.nome }}</h3>
+                <sc-if value="{{ d.isExample }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:2px 5px">Exemplo</span></sc-if>
+              </div>
+              <button onClick="{{ d.onFav }}" title="Favoritar" style="flex:none;background:none;border:none;cursor:pointer;font-size:19px;line-height:1;color:{{ d.favColor }}">{{ d.star }}</button>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:7px;margin:9px 0 11px">
+              <span style="font-family:'Cinzel',serif;font-size:25px;font-weight:700;color:var(--text)">{{ d.total }}</span>
+              <span style="font-size: 12px; color: #ece3d0">cartas</span>
+              <span style="margin-left:auto;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;color:{{ d.legalColor }};background:{{ d.legalBg }}">{{ d.legalText }}</span>
+            </div>
+            <div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bg3);margin-bottom:13px">
+              <sc-for list="{{ d.seg }}" as="s" hint-placeholder-count="4"><div style="height:100%;width:{{ s.pct }}%;background:{{ s.color }}"></div></sc-for>
+            </div>
+            <div style="display:flex;gap:7px">
+              <button onClick="{{ d.onOpen }}" style="flex: 1; color: #161616; border: 1px solid var(--line); border-radius: 7px; padding: 7px; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; background-color: #bea356">Abrir</button>
+              <button onClick="{{ d.onDup }}" style="background: transparent; color: #ece3d0; border: 1px solid var(--line); border-radius: 7px; padding: 7px 11px; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; border-color: #bea356">Duplicar</button>
+              <button onClick="{{ d.onDel }}" style="background: transparent; color: #d98a7e; border: 1px solid var(--line); border-radius: 7px; padding: 7px 11px; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; border-color: #bea356">Excluir</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ noDecks }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;color:var(--muted);font-size:14px;padding:60px 20px;border:1px dashed var(--line);border-radius:12px">Nenhum baralho ainda. Crie um novo ou importe uma lista.</div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== BUILDER ===================== -->
+  <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Builder" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div style="flex: none; display: flex; align-items: center; gap: 9px; padding: 9px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; background-color: #121342">
+      <button onClick="{{ goHome }}" style="background:transparent;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">← Baralhos</button>
+      <input value="{{ deckName }}" onChange="{{ renameCur }}" placeholder="Nome do baralho" style="font-family:'Cinzel',serif;font-weight:600;font-size:16px;background:transparent;border:none;border-bottom:1px dashed var(--line);color:var(--text);padding:4px 2px;min-width:120px;flex:0 1 240px;outline:none">
+      <button onClick="{{ toggleFavCur }}" title="Favoritar" style="background:none;border:none;cursor:pointer;font-size:19px;line-height:1;color:{{ favColor }}">{{ favStar }}</button>
+      <div style="flex:1"></div>
+      <button onClick="{{ doExport }}" style="background:transparent;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">Exportar</button>
+      <button onClick="{{ openImport }}" style="background:transparent;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">Importar</button>
+      <button onClick="{{ delCur }}" style="background:transparent;color:#d98a7e;border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">Excluir</button>
+    </div>
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;display:flex;background:var(--bg2);border-bottom:1px solid var(--line)">
+        <button onClick="{{ tabCatalog }}" style="{{ tabCatStyle }}">Catálogo</button>
+        <button onClick="{{ tabDeck }}" style="{{ tabDeckStyle }}">Baralho · {{ deckTotal }}</button>
+      </div>
+    </sc-if>
+
+    <div style="flex:1;display:flex;overflow:hidden">
+      <!-- CATALOG -->
+      <sc-if value="{{ showCatalog }}" hint-placeholder-val="{{ true }}">
+      <section style="{{ catPaneStyle }}">
+        
+        <div style="flex:none;padding:11px 14px;border-bottom:1px solid var(--line);background:#0e0f37;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+          <div style="flex:1 1 340px;min-width:240px;display:flex;flex-direction:column;gap:8px">
+            <input value="{{ search }}" onChange="{{ onSearch }}" placeholder="Buscar carta, efeito ou nº…" style="width:100%;border:1px solid #bea356;border-radius:8px;color:var(--text);padding:9px 12px;font-family:inherit;font-size:13px;outline:none;background:#121342;box-sizing:border-box">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+              <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.on }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
+              <span style="width:1px;height:18px;background:var(--line);margin:0 2px"></span>
+              <sc-for list="{{ rarChips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.on }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
+              <select value="{{ fPc }}" onChange="{{ onPcSel }}" style="background:#121342;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12px;outline:none"><sc-for list="{{ pcOptions }}" as="o" hint-placeholder-count="9"><option value="{{ o }}">PC: {{ o }}</option></sc-for></select>
+              <select value="{{ fCol }}" onChange="{{ onColSel }}" style="background:#121342;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12px;outline:none;max-width:190px"><sc-for list="{{ colOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for></select>
+              <span style="font-size:11px;color:var(--muted)">{{ resultCount }} cartas</span>
+              <button onClick="{{ clearFilters }}" style="background:none;border:none;color:var(--gold,#c79a48);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">limpar</button>
+            </div>
+          </div>
+          <sc-if value="{{ hasCards }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1 1 290px;min-width:230px;background:#121342;border:1px solid var(--line);border-radius:10px;padding:9px 12px">
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px"><span style="font-family:'Cinzel',serif;font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold,#c79a48)">Estatísticas</span><span style="font-size:11px;color:var(--muted)">{{ deckTotal }} cartas</span></div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+              <div style="flex:1 1 150px;min-width:140px">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:5px">Curva de custo (PC)</div>
+                <div style="display:flex;align-items:flex-end;gap:4px;height:46px">
+                  <sc-for list="{{ costCurve }}" as="b" hint-placeholder-count="8">
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end">
+                      <div style="width:100%;background:linear-gradient(180deg,var(--gold,#c79a48),var(--red,#b14a3c));border-radius:2px 2px 0 0;height:{{ b.pct }}%;min-height:2px"></div>
+                      <span style="font-size:9px;color:var(--muted)">{{ b.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="flex:1 1 130px;min-width:120px">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:5px">Raridades</div>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <sc-for list="{{ rarityDist }}" as="r" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <span style="width:7px;height:7px;border-radius:50%;background:{{ r.color }};flex:none"></span>
+                      <span style="flex:1;font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.rar }}</span>
+                      <span style="font-size:10px;color:var(--muted)">{{ r.count }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+        </div><div style="flex:1;overflow-y:auto;padding:11px 12px;background:#0e0f37;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;align-content:start">
+          <sc-for list="{{ filtered }}" as="card" hint-placeholder-count="18">
+            <div title="{{ card.tooltip }}" style="position:relative;border:2px solid {{ card.cellBorder }};border-radius:10px;background:#121342;display:flex;flex-direction:column">
+              <div onClick="{{ card.onAdd }}" style="position:relative;cursor:pointer;height:150px;flex:none;overflow:hidden;border-radius:8px 8px 0 0;border-bottom:3px solid {{ card.catColor }};background:repeating-linear-gradient(45deg,#15175b,#15175b 7px,#191b62 7px,#191b62 14px);display:flex;align-items:center;justify-content:center;padding:6px">
+                <sc-if value="{{ card.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ card.imgUrl }}" alt="{{ card.nome }}" referrerpolicy="no-referrer" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></sc-if>
+                <sc-if value="{{ card.noImg }}" hint-placeholder-val="{{ true }}"><span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6a6d9c;text-align:center;line-height:1.5">Nº {{ card.num }}</span></sc-if>
+                <sc-if value="{{ card.noImg }}" hint-placeholder-val="{{ true }}"><div title="Pontos de Conhecimento" style="position:absolute;top:5px;left:5px;width:23px;height:23px;border-radius:6px;background:rgba(11,12,46,.85);border:1px solid var(--gold,#c79a48);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:12px;color:var(--gold,#c79a48)">{{ card.pcShow }}</div></sc-if>
+                <sc-if value="{{ card.noImg }}" hint-placeholder-val="{{ false }}"><div title="{{ card.raridade }}" style="position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;background:{{ card.rarColor }};box-shadow:0 0 0 2px rgba(11,12,46,.7)"></div></sc-if>
+                <sc-if value="{{ card.inDeck }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;bottom:6px;right:6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold,#c79a48);color:#1a130a;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center">{{ card.qty }}</div></sc-if>
+              </div>
+              <div style="padding:5px 6px;display:flex;flex-direction:column;gap:5px">
+                <span style="font-size:11px;font-weight:600;color:var(--text);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px">{{ card.nome }}</span>
+                <sc-if value="{{ card.notInDeck }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ card.onAdd }}" style="width:100%;border:1px solid var(--gold,#c79a48);background:transparent;color:var(--gold,#c79a48);border-radius:6px;padding:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">+ Adicionar</button>
+                </sc-if>
+                <sc-if value="{{ card.inDeck }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:5px">
+                    <button onClick="{{ card.onDec }}" style="flex:1;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1;cursor:pointer;font-family:inherit">−</button>
+                    <button onClick="{{ card.onInc }}" style="flex:1;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1;cursor:pointer;font-family:inherit">+</button>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+            <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:40px 10px">Nenhuma carta encontrada com esses filtros.</div>
+          </sc-if>
+        </div>
+      </section>
+      </sc-if>
+
+      <!-- DECK PANEL -->
+      <sc-if value="{{ showDeck }}" hint-placeholder-val="{{ false }}">
+      <aside style="{{ deckPaneStyle }}">
+        <div style="flex: 1; overflow-y: auto; padding: 13px 14px 34px; background-color: #0e0f37">
+          <div style="border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; color: #121342; background-color: #121342; border-color: #bea356">
+            <sc-for list="{{ validations }}" as="v" hint-placeholder-count="3">
+              <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:3px 0;color:{{ v.color }}">
+                <span style="font-weight:700;flex:none">{{ v.icon }}</span><span>{{ v.text }}</span>
+              </div>
+            </sc-for>
+            <div style="font-size:10px;color:#6f8076;margin-top:7px;border-top:1px solid var(--line);padding-top:6px">Limites de cópia por raridade são uma sugestão — ajustáveis conforme o livro de regras.</div>
+          </div>
+
+          <sc-if value="{{ deckEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;color:var(--muted);font-size:13px;padding:26px 10px">Baralho vazio.<br>Adicione cartas pelo catálogo.</div>
+          </sc-if>
+
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+            <div style="margin-bottom:14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="width:9px;height:9px;border-radius:2px;background:{{ g.color }}"></span>
+                <span style="font-family:'Cinzel',serif;font-weight:600;font-size:13px;letter-spacing:.03em;color:var(--text)">{{ g.cat }}</span>
+                <span style="font-size:11px;color:var(--muted)">{{ g.count }}</span>
+              </div>
+              <sc-for list="{{ g.cards }}" as="c" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; margin-bottom: 4px; background-color: #121342">
+                  <span style="width:20px;text-align:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--gold,#c79a48)">{{ c.pc }}</span>
+                  <span style="flex:1;min-width:0;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.nome }}</span>
+                  <span title="{{ c.raridade }}" style="flex:none;width:7px;height:7px;border-radius:50%;background:{{ c.rarColor }}"></span>
+                  <button onClick="{{ c.onDec }}" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">−</button>
+                  <span style="min-width:15px;text-align:center;font-weight:700;font-size:13px">{{ c.qty }}</span>
+                  <button onClick="{{ c.onInc }}" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">+</button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+
+        </div>
+      </aside>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== MODAL ===================== -->
+  <sc-if value="{{ showModal }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(8,12,10,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50">
+    <div onClick="{{ stop }}" style="background:var(--bg2);border:1px solid var(--line);border-radius:14px;width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.55)">
+      <div style="padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center">
+        <h3 style="font-family:'Cinzel',serif;font-weight:600;font-size:17px;margin:0;color:var(--text)">{{ modalTitle }}</h3>
+        <div style="flex:1"></div>
+        <button onClick="{{ closeModal }}" style="background:none;border:none;color:var(--muted);font-size:23px;cursor:pointer;line-height:1;font-family:inherit">×</button>
+      </div>
+      <div style="padding:16px 18px;overflow-y:auto">
+        <sc-if value="{{ isExport }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Sua lista de baralho, uma carta por linha. Copie e compartilhe.</p>
+          <textarea readonly="" value="{{ exportText }}" style="width:100%;min-height:230px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:11px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;resize:vertical;outline:none"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px"><button onClick="{{ copyExport }}" style="background:var(--gold,#c79a48);color:#1a130a;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">{{ copyLabel }}</button></div>
+        </sc-if>
+        <sc-if value="{{ isImport }}" hint-placeholder-val="{{ true }}">
+          <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Cole uma lista no formato <b style="color:var(--text)">3x Boitatá</b> (uma por linha). Um novo baralho será criado.</p>
+          <textarea value="{{ importText }}" onChange="{{ onImportText }}" placeholder="3x Boitatá
+2x Vitória-régia
+1x D. João III" style="width:100%;min-height:230px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:11px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;resize:vertical;outline:none"></textarea>
+          <sc-if value="{{ hasImportMsg }}" hint-placeholder-val="{{ false }}"><div style="margin-top:9px;font-size:12px;color:{{ importMsgColor }}">{{ importMsgText }}</div></sc-if>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button onClick="{{ closeModal }}" style="background:transparent;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 16px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">Cancelar</button><button onClick="{{ doImport }}" style="background:var(--gold,#c79a48);color:#1a130a;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">Importar</button></div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:840},&quot;corOuro&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#bea356&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;corPauBrasil&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#b14a3c&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  static CATS = ['Folclóricos','Históricos','Apoios','Feras','Plantas'];
+  static CATC = {'Folclóricos':'#c2503f','Históricos':'#c79a48','Apoios':'#8a72b8','Feras':'#c47a3a','Plantas':'#5aa06f'};
+  static RARS = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
+  static RARC = {'Comum':'#9b9384','Raro':'#5f8fb0','Super raro':'#8a72b8','Ultra raro':'#c79a48','Lendário':'#c2503f'};
+  static MAXC = {'Comum':4,'Raro':3,'Super raro':2,'Ultra raro':2,'Lendário':1};
+  static COLS = ['DESCOBRIMENTO','EXPEDIÇÕES SECRETAS'];
+  static MIN = 40; static MAX = 80; static KEY = 'lb_decks_v1';
+
+  state = { loading:true, view:'home', cards:[], byId:{}, decks:[], editingIdx:-1,
+    search:'', fCat:'Todas', fRar:'Todas', fCol:'Todas', fPc:'Todas',
+    expanded:{}, modal:null, importText:'', importMsg:null, copied:false,
+    imgMap:null, isMobile:false, tab:'catalog' };
+
+  async componentDidMount(){
+    this._mq = ()=>this.setState({ isMobile: window.innerWidth < 880 });
+    window.addEventListener('resize', this._mq);
+
+    // 1) Catálogo + baralhos exemplo: lb-data.js (sempre carrega, offline-friendly)
+    let mod=null;
+    try { mod = await import('./lb-data.js'); } catch(e){ console.error('lb-data load failed', e); }
+    const cards = (mod && mod.CARDS) ? mod.CARDS.map(c => ({...c})) : [];
+    const byId = {}; cards.forEach(c => byId[c.id] = c);
+    let decks = null;
+    try { const s = localStorage.getItem(Component.KEY); if(s) decks = JSON.parse(s); } catch(e){}
+    if(!decks){
+      decks = ((mod && mod.SEED_DECKS) || []).map(d => ({ nome:d.nome, fav:false, isExample:true, cards:d.cards.map(c=>({id:c.id, qty:c.qty})) }));
+    }
+    this.setState({ loading:false, cards, byId, decks, isMobile: window.innerWidth < 880 });
+
+    // 2) Enriquecer com imagens da API
+    try {
+      const res = await fetch('https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas');
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const apiCards = await res.json();
+      const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+
+      // Match primário: wp_id === id (se lb-data.js usa o mesmo id do WP)
+      const byWpId = {};
+      apiCards.forEach(ac => { byWpId[ac.wp_id] = ac; });
+
+      // Match secundário: nome normalizado
+      const byName = {};
+      apiCards.forEach(ac => { if(ac.nome) byName[norm(ac.nome)] = ac; });
+
+      let filled = 0;
+      const unmatched = [];
+      cards.forEach(c => {
+        const apiData = byWpId[c.id] || byName[norm(c.nome)];
+        if(apiData && apiData.imagem_url){
+          c.imagem_url = apiData.imagem_url;
+          if(byId[c.id]) byId[c.id].imagem_url = apiData.imagem_url;
+          filled++;
+        } else {
+          unmatched.push(c.nome);
+        }
+      });
+
+      console.log('Imagens API: ' + filled + '/' + cards.length + ' casadas.');
+      if(unmatched.length) console.warn('Cartas SEM match na API:', unmatched);
+
+      // Forçar re-render via setState
+      this.setState({ cards: cards.slice() });
+    } catch(e){
+      console.warn('API de imagens indisponível (CORS?):', e.message || e);
+    }
+  }
+
+
+  normName(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+  componentWillUnmount(){ if(this._mq) window.removeEventListener('resize', this._mq); }
+
+  persist(decks){ try{ localStorage.setItem(Component.KEY, JSON.stringify(decks)); }catch(e){} }
+  updateDecks(decks){ this.persist(decks); this.setState({ decks }); }
+  curDeck(){ return this.state.decks[this.state.editingIdx]; }
+  total(d){ return d.cards.reduce((s,c)=>s+c.qty,0); }
+  maxCopies(card){ return Component.MAXC[card.raridade] || 3; }
+
+  mutateCur(fn){
+    const decks = this.state.decks.slice();
+    const d = { ...decks[this.state.editingIdx] };
+    d.cards = d.cards.map(c=>({ ...c }));
+    fn(d);
+    decks[this.state.editingIdx] = d;
+    this.updateDecks(decks);
+  }
+  add(id){ this.mutateCur(d=>{ const e=d.cards.find(c=>c.id===id); if(e){ const mx=this.maxCopies(this.state.byId[id]); if(e.qty<mx) e.qty++; } else d.cards.push({id,qty:1}); }); }
+  inc(id){ this.add(id); }
+  dec(id){ this.mutateCur(d=>{ const e=d.cards.find(c=>c.id===id); if(e){ e.qty--; if(e.qty<=0) d.cards=d.cards.filter(c=>c.id!==id); } }); }
+  setQ(id,q){ this.mutateCur(d=>{ if(q<=0){ d.cards=d.cards.filter(c=>c.id!==id); } else { const e=d.cards.find(c=>c.id===id); if(e) e.qty=q; else d.cards.push({id,qty:q}); } }); }
+  rename(v){ this.mutateCur(d=>{ d.nome=v; }); }
+
+  newDeck(){
+    const decks=this.state.decks.slice();
+    decks.push({ nome:'Novo Baralho', fav:false, isExample:false, cards:[] });
+    this.persist(decks);
+    this.setState({ decks, view:'builder', editingIdx:decks.length-1, tab:'catalog', search:'', fCat:'Todas', fRar:'Todas', fCol:'Todas', fPc:'Todas' });
+  }
+  duplicate(idx){
+    const decks=this.state.decks.slice(); const src=decks[idx];
+    decks.splice(idx+1,0,{ nome:src.nome+' (cópia)', fav:false, isExample:false, cards:src.cards.map(c=>({...c})) });
+    this.updateDecks(decks);
+  }
+  del(idx){
+    if(!window.confirm('Excluir este baralho? Esta ação não pode ser desfeita.')) return;
+    const decks=this.state.decks.slice(); decks.splice(idx,1);
+    this.persist(decks);
+    this.setState({ decks, view:'home', editingIdx:-1, modal:null });
+  }
+
+  chipStyle(active,color){
+    const base='border-radius:20px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;border:1px solid ';
+    if(active) return base+(color||'var(--gold,#c79a48)')+';background:'+(color||'var(--gold,#c79a48)')+';color:#16110a';
+    return base+'var(--line);background:transparent;color:var(--muted)';
+  }
+
+  exportText(d){
+    const S=this.state, C=Component; const out=[]; const total=this.total(d);
+    out.push('# '+d.nome+' — '+total+' cartas'); out.push('');
+    C.CATS.forEach(cat=>{
+      const items=d.cards.filter(c=>S.byId[c.id] && S.byId[c.id].categoria===cat).map(c=>({card:S.byId[c.id], qty:c.qty}))
+        .sort((a,b)=>(parseInt(a.card.pc)||99)-(parseInt(b.card.pc)||99) || a.card.nome.localeCompare(b.card.nome));
+      if(!items.length) return;
+      const sub=items.reduce((s,i)=>s+i.qty,0);
+      out.push('## '+cat+' ('+sub+')');
+      items.forEach(i=> out.push(i.qty+'x '+i.card.nome));
+      out.push('');
+    });
+    return out.join('\n').trim();
+  }
+  doImport(){
+    const S=this.state;
+    const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    const nameMap={}, numMap={};
+    S.cards.forEach(c=>{ nameMap[norm(c.nome)]=c.id; numMap[norm(c.num)]=c.id; });
+    const lines=(S.importText||'').split('\n');
+    const acc={}; let missed=[]; let name='Baralho Importado';
+    lines.forEach(line=>{
+      let t=line.trim(); if(!t) return;
+      if(t.charAt(0)==='#'){ if(t.indexOf('# ')===0){ const m=t.replace(/^#+\s*/,'').replace(/—.*$/,'').trim(); if(m && !/^\d/.test(m)) name=m; } return; }
+      let qty=1, nm=t;
+      let mm=t.match(/^(\d+)\s*[x×]?\s+(.+)$/i);
+      if(mm){ qty=parseInt(mm[1]); nm=mm[2]; }
+      else { mm=t.match(/^(.+?)\s*[x×]\s*(\d+)$/i); if(mm){ nm=mm[1]; qty=parseInt(mm[2]); } }
+      nm=nm.trim();
+      let id = nameMap[norm(nm)]; if(id==null) id=numMap[norm(nm)];
+      if(id==null){ missed.push(nm); return; }
+      acc[id]=(acc[id]||0)+qty;
+    });
+    const cards=Object.keys(acc).map(id=>({ id:+id, qty:acc[id] }));
+    if(!cards.length){ this.setState({ importMsg:{ ok:false, text:'Nenhuma carta reconhecida. Use o formato "3x Nome da Carta".' } }); return; }
+    const decks=S.decks.slice();
+    decks.push({ nome:name, fav:false, isExample:false, cards });
+    this.persist(decks);
+    let msg=null;
+    this.setState({ decks, modal:null, view:'builder', editingIdx:decks.length-1, tab:'deck', importText:'', importMsg:null });
+    if(missed.length){ console.warn('Cartas não reconhecidas:', missed); }
+  }
+
+  imageUrl(card){
+    // ÚNICA fonte: imagem_url (card completo com moldura/arte/stats)
+    return card.imagem_url || '';
+  }
+  
+  renderVals(){
+    const S=this.state, C=Component;
+    const base = {
+      corOuro: (this.props && this.props.corOuro) || '#c79a48',
+      corPauBrasil: (this.props && this.props.corPauBrasil) || '#b14a3c',
+      loading: S.loading,
+      isHome: !S.loading && S.view==='home',
+      isBuilder: !S.loading && S.view==='builder' && !!this.curDeck(),
+      isMobile: S.isMobile,
+      showModal: !S.loading && !!S.modal,
+      goHome: ()=>this.setState({ view:'home', modal:null }),
+      newDeck: ()=>this.newDeck(),
+      openImport: ()=>this.setState({ modal:'import', importText:'', importMsg:null }),
+      closeModal: ()=>this.setState({ modal:null, copied:false }),
+      stop: (e)=>e.stopPropagation(),
+    };
+    if(S.loading) return base;
+    const showEffect = (this.props && this.props.mostrarEfeito) !== false;
+
+    // ---- HOME decks ----
+    const decks = S.decks.map((d,idx)=>{
+      const total=this.total(d);
+      const legal = total>=C.MIN && total<=C.MAX;
+      const seg = C.CATS.map(cat=>{
+        const n=d.cards.filter(c=>S.byId[c.id] && S.byId[c.id].categoria===cat).reduce((s,c)=>s+c.qty,0);
+        return { color:C.CATC[cat], pct: total ? (n/total*100) : 0, n };
+      }).filter(s=>s.n>0);
+      return { idx, nome:d.nome, isExample:!!d.isExample, fav:!!d.fav,
+        star: d.fav?'★':'☆', favColor: d.fav?'var(--gold,#c79a48)':'#4a4d7a',
+        total, legalText: legal?'Válido':(total<C.MIN?('Faltam '+(C.MIN-total)):('Excede '+(total-C.MAX))),
+        legalColor: legal?'#6fa8dc':'#d98a7e', legalBg: legal?'rgba(111,168,220,.16)':'rgba(217,138,126,.14)',
+        seg,
+        onOpen: ()=>this.setState({ view:'builder', editingIdx:idx, tab:'catalog' }),
+        onFav: (e)=>{ e.stopPropagation(); const ds=S.decks.slice(); ds[idx]={...ds[idx], fav:!ds[idx].fav}; this.updateDecks(ds); },
+        onDup: (e)=>{ e.stopPropagation(); this.duplicate(idx); },
+        onDel: (e)=>{ e.stopPropagation(); this.del(idx); } };
+    });
+    decks.sort((a,b)=>(b.fav-a.fav));
+    base.decks = decks; base.noDecks = decks.length===0;
+
+    // ---- MODAL ----
+    if(S.modal==='export' && this.curDeck()){
+      base.modalTitle='Exportar baralho'; base.isExport=true; base.isImport=false;
+      base.exportText=this.exportText(this.curDeck());
+      base.copyLabel = S.copied ? 'Copiado!' : 'Copiar lista';
+      base.copyExport = ()=>{ try{ navigator.clipboard.writeText(this.exportText(this.curDeck())); this.setState({copied:true}); }catch(e){} };
+    }
+    if(S.modal==='import'){
+      base.modalTitle='Importar lista'; base.isImport=true; base.isExport=false;
+      base.importText=S.importText;
+      base.onImportText=(e)=>this.setState({ importText:e.target.value });
+      base.doImport=()=>this.doImport();
+      base.hasImportMsg=!!S.importMsg;
+      base.importMsgText=S.importMsg?S.importMsg.text:'';
+      base.importMsgColor=(S.importMsg&&S.importMsg.ok)?'#6fa8dc':'#d98a7e';
+    }
+
+    // ---- BUILDER ----
+    if(S.view==='builder' && this.curDeck()){
+      const d=this.curDeck(); const total=this.total(d);
+      const legal = total>=C.MIN && total<=C.MAX;
+      base.deckName=d.nome; base.deckTotal=total; base.minDeck=C.MIN; base.maxDeck=C.MAX;
+      base.legalColor = legal?'#6fa8dc':'#d98a7e';
+      base.favStar = d.fav?'★':'☆'; base.favColor = d.fav?'var(--gold,#c79a48)':'#4a4d7a';
+      base.renameCur=(e)=>this.rename(e.target.value);
+      base.toggleFavCur=()=>{ const ds=S.decks.slice(); ds[S.editingIdx]={...ds[S.editingIdx], fav:!ds[S.editingIdx].fav}; this.updateDecks(ds); };
+      base.doExport=()=>this.setState({ modal:'export', copied:false });
+      base.delCur=()=>this.del(S.editingIdx);
+      base.deckEmpty = d.cards.length===0; base.hasCards = d.cards.length>0;
+
+      base.tabCatalog=()=>this.setState({tab:'catalog'});
+      base.tabDeck=()=>this.setState({tab:'deck'});
+      const tabBase='flex:1;padding:11px;background:none;border:none;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;border-bottom:2px solid ';
+      base.tabCatStyle=tabBase+(S.tab==='catalog'?'var(--gold,#c79a48);color:var(--text)':'transparent;color:var(--muted)');
+      base.tabDeckStyle=tabBase+(S.tab==='deck'?'var(--gold,#c79a48);color:var(--text)':'transparent;color:var(--muted)');
+      base.showCatalog = !S.isMobile || S.tab==='catalog';
+      base.showDeck = !S.isMobile || S.tab==='deck';
+      base.catPaneStyle = 'flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden';
+      base.deckPaneStyle = S.isMobile
+        ? 'flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2)'
+        : 'flex:none;width:400px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);border-left:1px solid var(--line)';
+
+      // validations
+      const viol=[];
+      d.cards.forEach(c=>{ const card=S.byId[c.id]; if(card){ const mx=this.maxCopies(card); if(c.qty>mx) viol.push(card.nome+' ('+c.qty+'/'+mx+')'); } });
+      const raw=[
+        { ok: total>=C.MIN, text: total>=C.MIN?('Mínimo de '+C.MIN+' cartas atingido ('+total+')'):('Faltam '+(C.MIN-total)+' carta(s) para o mínimo de '+C.MIN) },
+        { ok: total<=C.MAX, text: total<=C.MAX?('Dentro do máximo de '+C.MAX+' cartas'):('Excede o máximo — remova '+(total-C.MAX)+' carta(s)') },
+        { ok: viol.length===0, text: viol.length===0?'Cópias por carta dentro do limite':('Excesso de cópias: '+viol.join(', ')) },
+      ];
+      base.validations = raw.map(v=>({ text:v.text, icon: v.ok?'✓':'!', color: v.ok?'#6fa8dc':'#d98a7e' }));
+
+      // groups
+      base.groups = C.CATS.map(cat=>{
+        const items=d.cards.filter(c=>S.byId[c.id] && S.byId[c.id].categoria===cat)
+          .map(c=>({ card:S.byId[c.id], qty:c.qty }))
+          .sort((a,b)=>(parseInt(a.card.pc)||99)-(parseInt(b.card.pc)||99) || a.card.nome.localeCompare(b.card.nome));
+        const count=items.reduce((s,i)=>s+i.qty,0);
+        return { cat, color:C.CATC[cat], count,
+          cards: items.map(it=>({ id:it.card.id, nome:it.card.nome,
+            pc:(parseInt(it.card.pc)>=1)?it.card.pc:'–', raridade:it.card.raridade, rarColor:C.RARC[it.card.raridade], qty:it.qty,
+            onInc:()=>this.inc(it.card.id), onDec:()=>this.dec(it.card.id) })) };
+      }).filter(g=>g.count>0);
+
+      // cost curve
+      const bk={}; for(let i=1;i<=7;i++) bk[i]=0; bk['–']=0;
+      d.cards.forEach(c=>{ const card=S.byId[c.id]; if(!card) return; const p=parseInt(card.pc); if(p>=1&&p<=7) bk[p]+=c.qty; else bk['–']+=c.qty; });
+      const maxB=Math.max(1, ...Object.keys(bk).map(k=>bk[k]));
+      base.costCurve=Object.keys(bk).map(k=>({ label:k, count:bk[k], pct: bk[k]/maxB*100 }));
+
+      // rarity dist
+      const rd={}; C.RARS.forEach(r=>rd[r]=0);
+      d.cards.forEach(c=>{ const card=S.byId[c.id]; if(card && rd[card.raridade]!=null) rd[card.raridade]+=c.qty; });
+      base.rarityDist=C.RARS.map(r=>({ rar:r, count:rd[r], color:C.RARC[r], pct: total?rd[r]/total*100:0 })).filter(x=>x.count>0);
+
+      // catalog
+      const q=(S.search||'').trim().toLowerCase();
+      const qmap={}; d.cards.forEach(c=>qmap[c.id]=c.qty);
+      let filtered=S.cards.filter(card=>{
+        if(S.fCat!=='Todas' && card.categoria!==S.fCat) return false;
+        if(S.fRar!=='Todas' && card.raridade!==S.fRar) return false;
+        if(S.fCol!=='Todas' && card.colecao!==S.fCol) return false;
+        if(S.fPc!=='Todas'){ const p=parseInt(card.pc); if(S.fPc==='–'){ if(p>=1) return false; } else if(String(p)!==S.fPc) return false; }
+        if(q){ if(!((card.nome||'').toLowerCase().includes(q) || (card.efeito||'').toLowerCase().includes(q) || (card.num||'').toLowerCase().includes(q))) return false; }
+        return true;
+      });
+      filtered.sort((a,b)=> C.CATS.indexOf(a.categoria)-C.CATS.indexOf(b.categoria) || (parseInt(a.pc)||99)-(parseInt(b.pc)||99) || a.nome.localeCompare(b.nome));
+      base.filtered=filtered.map(card=>{
+        const qty=qmap[card.id]||0; const ex=!!S.expanded[card.id];
+        const imgUrl=String(card.imagem_url || ''); const hasImg=imgUrl.length>0;
+        const tip=card.nome+' · PC '+((parseInt(card.pc)>=1)?card.pc:'–')+(((card.pa&&card.pa!=='--')||(card.pd&&card.pd!=='--'))?' · PA '+card.pa+'/PD '+card.pd:'')+' · '+card.raridade+' · '+card.categoria+(card.efeito?'\n\n'+card.efeito:'');
+        const hasStats=(card.pa && card.pa!=='--') || (card.pd && card.pd!=='--');
+        return { id:card.id, nome:card.nome, num:card.num, pcShow:(parseInt(card.pc)>=1)?card.pc:'–',
+          pa:card.pa, pd:card.pd, hasStats, categoria:card.categoria, catColor:C.CATC[card.categoria],
+          raridade:card.raridade, rarColor:C.RARC[card.raridade], efeito:card.efeito,
+          showEffectExpanded: !!card.efeito && ex,
+          showEffectClamp: !!card.efeito && !ex && showEffect,
+          qty, inDeck: qty>0, notInDeck: qty<=0, hasImg, noImg:!hasImg, imgUrl, tooltip:tip, cellBorder: qty>0?'var(--gold,#c79a48)':'var(--line)',
+          onAdd:()=>this.add(card.id), onInc:()=>this.inc(card.id), onDec:()=>this.dec(card.id),
+          onToggle:()=>this.setState(s=>({ expanded:{ ...s.expanded, [card.id]: !s.expanded[card.id] } })) };
+      });
+      base.resultCount=base.filtered.length; base.noResults=base.filtered.length===0;
+      base.search=S.search; base.onSearch=(e)=>this.setState({ search:e.target.value });
+      base.catChips=['Todas',...C.CATS].map(c=>({ label:c, on:()=>this.setState({fCat:c}), style:this.chipStyle(c===S.fCat, c==='Todas'?'':C.CATC[c]) }));
+      base.rarChips=['Todas',...C.RARS].map(r=>({ label:r, on:()=>this.setState({fRar:r}), style:this.chipStyle(r===S.fRar, r==='Todas'?'':C.RARC[r]) }));
+      base.colChips=['Todas',...C.COLS].map(c=>({ label:c, on:()=>this.setState({fCol:c}), style:this.chipStyle(c===S.fCol,'') }));
+      base.pcChips=['Todas','1','2','3','4','5','6','7','–'].map(p=>({ label:p, on:()=>this.setState({fPc:p}), style:this.chipStyle(p===S.fPc,'') }));
+      base.clearFilters=()=>this.setState({ fCat:'Todas', fRar:'Todas', fCol:'Todas', fPc:'Todas', search:'' });
+      base.fPc=S.fPc; base.fCol=S.fCol;
+      base.pcOptions=['Todas','1','2','3','4','5','6','7','–'];
+      base.colOptions=['Todas',...C.COLS];
+      base.onPcSel=(e)=>this.setState({ fPc:e.target.value });
+      base.onColSel=(e)=>this.setState({ fCol:e.target.value });
+    }
+    return base;
+  }
+}
+</script>
+</body>
+</html>
