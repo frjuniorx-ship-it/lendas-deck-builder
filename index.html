@@ -92,7 +92,8 @@ button{cursor:pointer;font-family:inherit}
 
 /* ── Catalog pane ── */
 #cat-pane{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
-#cat-filters{flex:none;padding:11px 14px;border-bottom:1px solid var(--line);background:#0e0f37;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+#cat-filters{flex:none;border-bottom:1px solid var(--line);background:#0e0f37}
+#filter-body{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;padding:11px 14px}
 .filter-col{flex:1 1 340px;min-width:240px;display:flex;flex-direction:column;gap:8px}
 #search-in{width:100%;border:1px solid var(--gold);border-radius:8px;color:var(--text);padding:9px 12px;font-family:inherit;font-size:13px;outline:none;background:var(--bg2)}
 .chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
@@ -274,7 +275,7 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
         <button id="filter-toggle" onclick="app.toggleFilters()">Filtros &amp; Estatísticas ▾</button>
         <div id="cat-filters">
           <div id="filter-body">
-            <div class="filter-col" style="padding:11px 14px 0">
+            <div class="filter-col">
               <input id="search-in" type="text" placeholder="Buscar carta, efeito ou nº…" oninput="app.setSearch(this.value)">
               <div class="chips" id="cat-chips"></div>
               <div class="chips" id="rar-chips"></div>
