@@ -9,70 +9,98 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Archivo:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-family:'Cinzel',serif;touch-action:manipulation;-webkit-user-select:none;user-select:none}
-:root{--gold:#c4a853;--gold2:rgba(196,168,83,.35);--gold3:rgba(196,168,83,.1);--bg:#0e0e0e;--bg2:#161616;--red:#c2503f;--green:#5aa06f}
+html,body{height:100%;overflow:hidden;background:#0b0c2e;color:#bea356;font-family:'Cinzel',serif;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+:root{
+  --gold:#bea356;--gold2:rgba(190,163,86,.35);--gold3:rgba(190,163,86,.1);
+  --bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;--line:#2c2f6b;
+  --red:#b14a3c;--green:#5aa06f;
+}
 
 /* ── SETUP ── */
-#s-setup{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:18px}
+#s-setup{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:16px;background:var(--bg)}
 .back-link{position:absolute;top:14px;left:16px;font-size:11px;letter-spacing:.1em;color:var(--gold2);text-decoration:none;text-transform:uppercase}
 .setup-eye{width:52px;height:52px;object-fit:contain}
-.setup-title{font-size:clamp(15px,3.8vw,22px);text-align:center;letter-spacing:.12em;text-transform:uppercase;line-height:1.4;max-width:380px}
-.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(320px,88vw)}
-.preset-btn{aspect-ratio:1;background:var(--bg2);border:1.5px solid var(--gold2);border-radius:6px;color:var(--gold);font-family:'Cinzel',serif;font-size:clamp(34px,9vw,52px);font-weight:700;cursor:pointer;transition:background .12s,border-color .12s;outline:none}
+.setup-title{font-size:clamp(13px,3.5vw,19px);text-align:center;letter-spacing:.1em;text-transform:uppercase;line-height:1.5;max-width:340px;color:var(--gold)}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(300px,86vw)}
+.preset-btn{aspect-ratio:1;background:var(--bg2);border:1.5px solid var(--line);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:clamp(30px,8vw,48px);font-weight:700;cursor:pointer;transition:background .12s,border-color .12s;outline:none}
 .preset-btn.sel,.preset-btn:active{background:var(--gold3);border-color:var(--gold)}
-.custom-row{display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
-.custom-in{width:72px;background:var(--bg2);border:1px solid var(--gold2);border-radius:4px;color:var(--gold);font-family:'Cinzel',serif;font-size:20px;text-align:center;padding:6px;outline:none}
-.custom-in::placeholder{color:rgba(196,168,83,.25)}
-.timer-row{display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
-.tog{padding:5px 18px;border:1.5px solid var(--gold2);border-radius:20px;background:transparent;color:var(--gold2);font-family:'Cinzel',serif;font-size:12px;cursor:pointer;transition:all .15s;min-width:58px}
+.custom-row{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
+.custom-in{width:72px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;color:var(--gold);font-family:'Cinzel',serif;font-size:18px;text-align:center;padding:6px;outline:none}
+.custom-in::placeholder{color:rgba(190,163,86,.25)}
+.players-row{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
+.timer-row{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.tog{padding:5px 16px;border:1.5px solid var(--line);border-radius:20px;background:transparent;color:var(--gold2);font-family:'Cinzel',serif;font-size:11px;cursor:pointer;transition:all .15s;min-width:52px}
 .tog.on{border-color:var(--gold);color:var(--gold);background:var(--gold3)}
-.play-btn{padding:13px 56px;background:linear-gradient(135deg,#9a7520,#c4a853,#9a7520);border:none;border-radius:30px;color:#1a120a;font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:.18em;cursor:pointer;margin-top:4px}
+.play-btn{padding:13px 52px;background:linear-gradient(135deg,#7a5c10,#bea356,#7a5c10);border:none;border-radius:30px;color:#1a120a;font-family:'Cinzel',serif;font-size:17px;font-weight:700;letter-spacing:.16em;cursor:pointer;margin-top:4px}
 
-/* ── GAME ── */
-#s-game{display:none;flex-direction:column;height:100vh;width:100vw}
-.parea{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:10px 16px;position:relative;transition:background .3s}
+/* ── GAME 2P ── */
+#s-game{display:none;flex-direction:column;height:100vh;width:100vw;background:var(--bg)}
+.parea{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:8px 16px;position:relative;transition:background .3s}
 .parea.flip{transform:rotate(180deg)}
-.parea.myturn{background:rgba(196,168,83,.04)}
+.parea.myturn{background:rgba(190,163,86,.04)}
 
-.chev{width:clamp(44px,11vw,58px);height:clamp(44px,11vw,58px);border-radius:50%;border:2px solid var(--gold2);background:transparent;color:var(--gold2);font-size:clamp(16px,4vw,22px);cursor:pointer;display:flex;align-items:center;justify-content:center;outline:1px solid rgba(196,168,83,.12);outline-offset:3px;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.chev.on{border-color:var(--gold);color:var(--gold);background:var(--gold3);outline-color:rgba(196,168,83,.3)}
+.chev{width:clamp(40px,10vw,54px);height:clamp(40px,10vw,54px);border-radius:50%;border:2px solid var(--line);background:transparent;color:var(--gold2);font-size:clamp(14px,3.5vw,20px);cursor:pointer;display:flex;align-items:center;justify-content:center;outline:1px solid rgba(190,163,86,.12);outline-offset:3px;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.chev.on{border-color:var(--gold);color:var(--gold);background:var(--gold3);outline-color:rgba(190,163,86,.3)}
 
-.pc-row{display:flex;align-items:center;gap:clamp(12px,5vw,36px)}
-.pc-btn{width:clamp(58px,15vw,76px);height:clamp(58px,15vw,76px);border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--gold);font-size:clamp(28px,7vw,38px);line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;outline:1px solid var(--gold2);outline-offset:4px;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.pc-row{display:flex;align-items:center;gap:clamp(10px,4vw,32px)}
+.pc-btn{width:clamp(54px,14vw,72px);height:clamp(54px,14vw,72px);border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--gold);font-size:clamp(26px,6.5vw,36px);line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;outline:1px solid var(--gold2);outline-offset:4px;-webkit-tap-highlight-color:transparent;transition:background .1s}
 .pc-btn:active{background:var(--gold3)}
-.pc-num{font-size:clamp(80px,20vw,120px);font-weight:700;line-height:1;min-width:2.6ch;text-align:center;color:var(--gold)}
+.pc-num{font-size:clamp(68px,17vw,104px);font-weight:700;line-height:1;min-width:2.6ch;text-align:center;color:var(--gold)}
 
-.delta{font-size:clamp(20px,5vw,28px);font-weight:500;height:36px;text-align:center;opacity:0;transition:opacity .4s;letter-spacing:.05em}
+.delta{font-size:clamp(18px,4.5vw,26px);font-weight:500;height:32px;text-align:center;opacity:0;transition:opacity .4s;letter-spacing:.05em}
 .delta.show{opacity:1}
 .delta.pos{color:var(--green)}
 .delta.neg{color:var(--red)}
 
-.timer{font-size:clamp(15px,3.8vw,20px);letter-spacing:.14em;font-variant-numeric:tabular-nums;border:1.5px solid var(--gold2);border-radius:4px;padding:4px 14px;min-width:84px;text-align:center;transition:color .3s,border-color .3s}
+.timer{font-size:clamp(13px,3.2vw,17px);letter-spacing:.14em;font-variant-numeric:tabular-nums;border:1.5px solid var(--line);border-radius:4px;padding:3px 12px;min-width:76px;text-align:center;transition:color .3s,border-color .3s;color:var(--gold2)}
 .timer.red{color:var(--red);border-color:var(--red)}
 
 /* ── CENTER DIVIDER ── */
-#center{flex:none;height:54px;display:flex;align-items:center;justify-content:center;position:relative;border-top:1px solid var(--gold2);border-bottom:1px solid var(--gold2);background:repeating-linear-gradient(90deg,rgba(196,168,83,.06) 0,rgba(196,168,83,.06) 3px,transparent 3px,transparent 10px)}
-#eye-btn{width:50px;height:50px;border-radius:50%;background:var(--bg);border:2px solid var(--gold2);cursor:pointer;padding:5px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:border-color .2s}
+#center{flex:none;height:52px;display:flex;align-items:center;justify-content:center;position:relative;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:repeating-linear-gradient(90deg,rgba(190,163,86,.05) 0,rgba(190,163,86,.05) 3px,transparent 3px,transparent 10px)}
+#eye-btn{width:48px;height:48px;border-radius:50%;background:var(--bg);border:2px solid var(--line);cursor:pointer;padding:5px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:border-color .2s}
 #eye-btn:active{border-color:var(--gold)}
 #eye-btn img{width:100%;height:100%;object-fit:contain}
-#eye-fb{font-size:22px;color:var(--gold2);display:none}
+#eye-fb{font-size:20px;color:var(--gold2);display:none}
+
+/* ── GAME 4P ── */
+#s-game4{display:none;height:100vh;width:100vw;background:var(--bg);position:relative}
+.g4-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;height:100%;width:100%}
+.g4-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;position:relative}
+.g4-cell.flip{transform:rotate(180deg)}
+.g4-cell.myturn4{background:rgba(190,163,86,.06)}
+.g4-num{font-family:'Cinzel',serif;font-size:clamp(50px,14vw,80px);font-weight:700;color:var(--gold);line-height:1;min-width:2ch;text-align:center}
+.g4-btns{display:flex;gap:clamp(8px,3vw,20px);align-items:center}
+.g4-btn{width:clamp(44px,11vw,58px);height:clamp(44px,11vw,58px);border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--gold);font-size:clamp(22px,5.5vw,30px);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.g4-btn:active{background:var(--gold3)}
+.g4-delta{font-size:clamp(14px,3.5vw,20px);font-weight:500;height:24px;opacity:0;transition:opacity .4s;text-align:center}
+.g4-delta.show{opacity:1}
+.g4-delta.pos{color:var(--green)}
+.g4-delta.neg{color:var(--red)}
+.g4-timer{font-size:clamp(11px,2.8vw,14px);letter-spacing:.12em;border:1px solid var(--line);border-radius:3px;padding:2px 8px;color:var(--gold2);font-variant-numeric:tabular-nums}
+.g4-timer.red{color:var(--red);border-color:var(--red)}
+/* Cross dividers */
+#g4-hline{position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line);pointer-events:none}
+#g4-vline{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
+#g4-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;background:var(--bg);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent}
+#g4-center img{width:32px;height:32px;object-fit:contain}
+#g4-center-fb{font-size:18px;color:var(--gold2);display:none}
 
 /* ── MODAL ── */
-#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);align-items:center;justify-content:center;z-index:99}
-.modal-box{background:var(--bg2);border:1.5px solid var(--gold);border-radius:14px;padding:28px 32px;text-align:center;max-width:290px;width:90%}
-.modal-box p{font-size:15px;letter-spacing:.1em;text-transform:uppercase;line-height:1.6;margin-bottom:22px;color:var(--gold)}
-.modal-actions{display:flex;gap:10px;justify-content:center}
-.btn-yes{padding:10px 22px;background:var(--gold3);border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:13px;cursor:pointer}
-.btn-no{padding:10px 22px;background:transparent;border:1.5px solid var(--gold2);border-radius:8px;color:var(--gold2);font-family:'Cinzel',serif;font-size:13px;cursor:pointer}
+#modal{display:none;position:fixed;inset:0;background:rgba(5,6,20,.88);align-items:center;justify-content:center;z-index:99}
+.modal-box{background:var(--bg2);border:1.5px solid var(--gold);border-radius:14px;padding:26px 28px;text-align:center;max-width:280px;width:90%}
+.modal-box p{font-size:14px;letter-spacing:.08em;text-transform:uppercase;line-height:1.6;margin-bottom:20px;color:var(--gold)}
+.modal-actions{display:flex;flex-direction:column;gap:9px}
+.btn-reset{padding:11px;background:var(--gold3);border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:13px;cursor:pointer;width:100%}
+.btn-home{padding:11px;background:transparent;border:1.5px solid var(--line);border-radius:8px;color:var(--gold2);font-family:'Cinzel',serif;font-size:13px;cursor:pointer;width:100%;text-decoration:none;display:block}
+.btn-cancel{padding:9px;background:transparent;border:none;color:var(--gold2);font-family:'Cinzel',serif;font-size:11px;cursor:pointer;width:100%;letter-spacing:.08em}
 </style>
 </head>
 <body>
 
 <!-- ══════════════ SETUP ══════════════ -->
 <div id="s-setup">
-  <a class="back-link" href="./index.html">← Deck Builder</a>
-  <img class="setup-eye" src="./Logo.png" alt="L&B" id="setup-logo"
-    onerror="this.style.display='none'">
+  <a class="back-link" href="./index.html">← Tela inicial</a>
+  <img class="setup-eye" src="./Logo.png" alt="L&B" id="setup-logo" onerror="this.style.display='none'">
   <h1 class="setup-title">Selecione a pontuação inicial da partida</h1>
 
   <div class="preset-grid">
@@ -88,6 +116,11 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
       placeholder="…" oninput="pickCustom(this.value)">
   </div>
 
+  <div class="players-row">
+    <span>Jogadores</span>
+    <button class="tog on" id="tog-players" onclick="togglePlayers()">2</button>
+  </div>
+
   <div class="timer-row">
     <span>Cronômetro de turno</span>
     <button class="tog on" id="tog-timer" onclick="toggleTimer()">ON</button>
@@ -96,7 +129,7 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
   <button class="play-btn" onclick="startGame()">JOGAR</button>
 </div>
 
-<!-- ══════════════ GAME ══════════════ -->
+<!-- ══════════════ GAME 2P ══════════════ -->
 <div id="s-game">
 
   <!-- Jogador 0 — topo, rotacionado 180° -->
@@ -114,9 +147,9 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
   <!-- Divisor central com olho -->
   <div id="center">
     <button id="eye-btn" onclick="openModal()">
-      <img src="./Logo.png" alt="reset"
+      <img src="./Logo.png" alt="menu"
         onerror="this.style.display='none';document.getElementById('eye-fb').style.display='block'">
-      <span id="eye-fb">↺</span>
+      <span id="eye-fb">☰</span>
     </button>
   </div>
 
@@ -134,29 +167,84 @@ html,body{height:100%;overflow:hidden;background:#0e0e0e;color:#c4a853;font-fami
 
 </div>
 
+<!-- ══════════════ GAME 4P ══════════════ -->
+<div id="s-game4">
+  <div class="g4-grid">
+    <!-- p0 top-left, flip -->
+    <div class="g4-cell flip" id="g0" onclick="setTurn4(0)">
+      <div class="g4-delta" id="g0-delta"></div>
+      <div class="g4-num" id="g0-num">20</div>
+      <div class="g4-btns">
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(0,-1)">−</button>
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(0,1)">+</button>
+      </div>
+      <div class="g4-timer" id="g0-timer">02:00</div>
+    </div>
+    <!-- p1 top-right, flip -->
+    <div class="g4-cell flip" id="g1" onclick="setTurn4(1)">
+      <div class="g4-delta" id="g1-delta"></div>
+      <div class="g4-num" id="g1-num">20</div>
+      <div class="g4-btns">
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(1,1)">+</button>
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(1,-1)">−</button>
+      </div>
+      <div class="g4-timer" id="g1-timer">02:00</div>
+    </div>
+    <!-- p2 bottom-left, normal -->
+    <div class="g4-cell" id="g2" onclick="setTurn4(2)">
+      <div class="g4-timer" id="g2-timer">02:00</div>
+      <div class="g4-btns">
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(2,-1)">−</button>
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(2,1)">+</button>
+      </div>
+      <div class="g4-num" id="g2-num">20</div>
+      <div class="g4-delta" id="g2-delta"></div>
+    </div>
+    <!-- p3 bottom-right, normal -->
+    <div class="g4-cell" id="g3" onclick="setTurn4(3)">
+      <div class="g4-timer" id="g3-timer">02:00</div>
+      <div class="g4-btns">
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(3,1)">+</button>
+        <button class="g4-btn" onclick="event.stopPropagation();changePC4(3,-1)">−</button>
+      </div>
+      <div class="g4-num" id="g3-num">20</div>
+      <div class="g4-delta" id="g3-delta"></div>
+    </div>
+  </div>
+  <div id="g4-hline"></div>
+  <div id="g4-vline"></div>
+  <button id="g4-center" onclick="openModal()">
+    <img src="./Logo.png" alt="menu" onerror="this.style.display='none';document.getElementById('g4-center-fb').style.display='block'">
+    <span id="g4-center-fb">☰</span>
+  </button>
+</div>
+
 <!-- ══════════════ MODAL ══════════════ -->
 <div id="modal" onclick="closeModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <p>Resetar a partida?<br>Esta ação não pode ser desfeita.</p>
+    <p>O que deseja fazer?</p>
     <div class="modal-actions">
-      <button class="btn-yes" onclick="doReset()">Resetar</button>
-      <button class="btn-no"  onclick="closeModal()">Cancelar</button>
+      <button class="btn-reset" onclick="doReset()">↺ Resetar partida</button>
+      <a class="btn-home" href="./index.html">← Tela inicial</a>
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
-let cfg = { startPc: 20, useTimer: true };
+let cfg = { startPc: 20, useTimer: true, players: 2 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let players, tickId;
 
-function initPlayers() {
-  players = [0, 1].map(() => ({
+function initPlayers(n) {
+  players = Array.from({length: n}, () => ({
     pc: cfg.startPc,
     deltaAcc: 0,
     deltaTimerId: null,
+    timerSec: 120,
+    timerActive: false,
   }));
 }
 
@@ -176,6 +264,15 @@ function pickCustom(v) {
   }
 }
 
+function togglePlayers() {
+  cfg.players = cfg.players === 2 ? 4 : 2;
+  const b = document.getElementById('tog-players');
+  b.textContent = cfg.players;
+  b.classList.toggle('on', true);
+  // Hide timer option for 4 players (turn tracking is simpler)
+  document.querySelector('.timer-row').style.display = cfg.players === 4 ? 'none' : 'flex';
+}
+
 function toggleTimer() {
   cfg.useTimer = !cfg.useTimer;
   const b = document.getElementById('tog-timer');
@@ -184,10 +281,18 @@ function toggleTimer() {
 }
 
 function startGame() {
-  initPlayers();
   clearInterval(tickId);
 
-  // Render initial values
+  if (cfg.players === 4) {
+    start4P();
+  } else {
+    start2P();
+  }
+}
+
+// ── 2-Player game ─────────────────────────────────────────────────────────────
+function start2P() {
+  initPlayers(2);
   [0, 1].forEach(i => {
     document.getElementById(`p${i}-num`).textContent = cfg.startPc;
     const t = document.getElementById(`p${i}-timer`);
@@ -199,25 +304,22 @@ function startGame() {
     d.className = 'delta';
   });
 
-  // Player 1 starts (bottom) — activate chevron visually, start timer
   setTurnVisual(1);
   if (cfg.useTimer) {
     players[1].timerSec = 120;
     players[1].timerActive = true;
     players[0].timerSec = 120;
     players[0].timerActive = false;
-    tickId = setInterval(tick, 1000);
+    tickId = setInterval(tick2, 1000);
   }
 
   document.getElementById('s-setup').style.display = 'none';
+  document.getElementById('s-game4').style.display = 'none';
   document.getElementById('s-game').style.display = 'flex';
 }
 
-// ── Game ──────────────────────────────────────────────────────────────────────
 function setTurn(idx) {
   const other = 1 - idx;
-
-  // Reset the OTHER player's timer back to 2:00 and stop it
   if (cfg.useTimer) {
     players[other].timerSec = 120;
     players[other].timerActive = false;
@@ -225,14 +327,12 @@ function setTurn(idx) {
     otherEl.textContent = '02:00';
     otherEl.classList.remove('red');
 
-    // Start this player's timer
     players[idx].timerSec = 120;
     players[idx].timerActive = true;
     const idxEl = document.getElementById(`p${idx}-timer`);
     idxEl.textContent = '02:00';
     idxEl.classList.remove('red');
   }
-
   setTurnVisual(idx);
 }
 
@@ -243,25 +343,22 @@ function setTurnVisual(idx) {
   });
 }
 
-function tick() {
+function tick2() {
   [0, 1].forEach(i => {
     const p = players[i];
     if (!p.timerActive || p.timerSec <= 0) return;
     p.timerSec--;
     const el = document.getElementById(`p${i}-timer`);
-    const m = String(Math.floor(p.timerSec / 60)).padStart(2, '0');
-    const s = String(p.timerSec % 60).padStart(2, '0');
-    el.textContent = `${m}:${s}`;
-    if (p.timerSec === 0) {
-      el.classList.add('red');
-      p.timerActive = false;
-    }
+    el.textContent = fmt(p.timerSec);
+    if (p.timerSec === 0) { el.classList.add('red'); p.timerActive = false; }
   });
 }
 
 function changePC(idx, delta) {
   players[idx].pc += delta;
-  players[idx].deltaAcc = (players[idx].deltaAcc || 0) + delta;
+  const prev = players[idx].deltaAcc || 0;
+  // Reset accumulator when switching direction
+  players[idx].deltaAcc = (delta > 0 && prev < 0) || (delta < 0 && prev > 0) ? delta : prev + delta;
 
   document.getElementById(`p${idx}-num`).textContent = players[idx].pc;
 
@@ -277,18 +374,65 @@ function changePC(idx, delta) {
   }, 2000);
 }
 
+// ── 4-Player game ─────────────────────────────────────────────────────────────
+function start4P() {
+  initPlayers(4);
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`g${i}-num`).textContent = cfg.startPc;
+    document.getElementById(`g${i}-delta`).className = 'g4-delta';
+    document.getElementById(`g${i}-delta`).textContent = '';
+    const t = document.getElementById(`g${i}-timer`);
+    t.textContent = '02:00';
+    t.classList.remove('red');
+    t.style.display = 'none'; // no turn timer for 4P
+    document.getElementById(`g${i}`).classList.remove('myturn4');
+  }
 
-// ── Reset ─────────────────────────────────────────────────────────────────────
+  document.getElementById('s-setup').style.display = 'none';
+  document.getElementById('s-game').style.display = 'none';
+  document.getElementById('s-game4').style.display = 'block';
+}
+
+function setTurn4(idx) {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`g${i}`).classList.toggle('myturn4', i === idx);
+  }
+}
+
+function changePC4(idx, delta) {
+  players[idx].pc += delta;
+  const prev = players[idx].deltaAcc || 0;
+  players[idx].deltaAcc = (delta > 0 && prev < 0) || (delta < 0 && prev > 0) ? delta : prev + delta;
+
+  document.getElementById(`g${idx}-num`).textContent = players[idx].pc;
+
+  const acc = players[idx].deltaAcc;
+  const el = document.getElementById(`g${idx}-delta`);
+  el.textContent = (acc > 0 ? '+' : '') + acc;
+  el.className = 'g4-delta show ' + (acc >= 0 ? 'pos' : 'neg');
+
+  clearTimeout(players[idx].deltaTimerId);
+  players[idx].deltaTimerId = setTimeout(() => {
+    el.classList.remove('show');
+    players[idx].deltaAcc = 0;
+  }, 2000);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmt(sec) {
+  return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+}
+
+// ── Reset / Modal ─────────────────────────────────────────────────────────────
 function openModal()  { document.getElementById('modal').style.display = 'flex'; }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
 function doReset() {
   closeModal();
   clearInterval(tickId);
-  startGame();
-  // startGame hides setup and shows game again, so keep game visible
-  document.getElementById('s-setup').style.display = 'none';
-  document.getElementById('s-game').style.display = 'flex';
+  document.getElementById('s-game').style.display = 'none';
+  document.getElementById('s-game4').style.display = 'none';
+  document.getElementById('s-setup').style.display = 'flex';
 }
 </script>
 </body>
