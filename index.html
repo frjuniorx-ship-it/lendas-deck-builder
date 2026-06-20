@@ -572,7 +572,6 @@ function renderCatalog(){
     return `<div class="cc${qty>0?' indeck':''}" title="${esc(tip)}">
   <div class="cc-img" onclick="app.add(${card.id})">
     ${hasImg?`<img src="${esc(imgUrl)}" alt="${esc(card.nome)}" referrerpolicy="no-referrer" decoding="async">`:`<span class="cc-ph">${esc(card.nome)}\nNº ${esc(card.num)}</span>`}
-    ${qty>0?`<div class="cc-qb">${qty}</div>`:''}
   </div>
   <div class="cc-acts">
     ${qty===0
