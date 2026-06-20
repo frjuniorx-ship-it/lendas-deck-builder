@@ -91,11 +91,11 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 .stats-hdr{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
 .stats-ttl{font-family:'Cinzel',serif;font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
 #stats-cnt{font-size:11px;color:var(--muted)}
-.stats-row{display:flex;gap:16px;flex-wrap:wrap}
-.cost-col{flex:1 1 150px;min-width:140px}
+.stats-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.cost-col{flex:1 1 150px;min-width:140px;display:flex;flex-direction:column}
 .rar-col{flex:1 1 130px;min-width:120px}
 .mini-lbl{font-size:10px;color:var(--muted);margin-bottom:5px}
-#cost-bars{display:flex;align-items:flex-end;gap:4px;height:46px}
+#cost-bars{display:flex;align-items:flex-end;gap:4px;height:80px}
 .cb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end}
 .cb-bar{width:100%;background:linear-gradient(180deg,var(--gold),var(--red));border-radius:2px 2px 0 0;min-height:2px}
 .cb-lbl{font-size:9px;color:var(--muted)}
@@ -107,17 +107,15 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 #card-grid{flex:1;overflow-y:auto;padding:11px 12px;background:#0e0f37;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;align-content:start}
 .cc{position:relative;border:2px solid var(--line);border-radius:10px;background:var(--bg2);display:flex;flex-direction:column}
 .cc.indeck{border-color:var(--gold)}
-.cc-img{position:relative;cursor:pointer;height:150px;flex:none;overflow:hidden;border-radius:8px 8px 0 0;border-bottom:3px solid var(--line);background:repeating-linear-gradient(45deg,#15175b,#15175b 7px,#191b62 7px,#191b62 14px);display:flex;align-items:center;justify-content:center;padding:6px}
+.cc-img{position:relative;cursor:pointer;height:178px;flex:none;overflow:hidden;border-radius:8px;background:repeating-linear-gradient(45deg,#15175b,#15175b 7px,#191b62 7px,#191b62 14px);display:flex;align-items:center;justify-content:center}
 .cc-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.cc-ph{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6a6d9c;text-align:center;line-height:1.5;position:relative;z-index:1}
-.cc-pc{position:absolute;top:5px;left:5px;width:23px;height:23px;border-radius:6px;background:rgba(11,12,46,.85);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:12px;color:var(--gold);z-index:2}
-.cc-rd{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px rgba(11,12,46,.7);z-index:2}
-.cc-qb{position:absolute;bottom:6px;right:6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:#1a130a;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2}
-.cc-info{padding:5px 6px;display:flex;flex-direction:column;gap:5px}
-.cc-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
-.btn-add{width:100%;border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:6px;padding:4px;font-size:11px;font-weight:600}
-.qty-ctrl{display:flex;align-items:center;gap:5px}
-.btn-q{flex:1;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1}
+.cc-ph{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6a6d9c;text-align:center;line-height:1.5;position:relative;z-index:1;padding:6px}
+.cc-qb{position:absolute;bottom:5px;right:5px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:#1a130a;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2}
+.cc-acts{display:flex;gap:4px;padding:5px 5px 5px}
+.btn-add{flex:1;border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:6px;padding:5px;font-size:12px;font-weight:600}
+.qty-ctrl{flex:1;display:flex;align-items:center;gap:4px}
+.btn-q{flex:1;height:26px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:15px;line-height:1}
+.btn-q-n{min-width:18px;text-align:center;font-weight:700;font-size:13px;color:var(--text)}
 .no-res{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:40px 10px}
 
 /* ── Deck pane ── */
@@ -272,10 +270,10 @@ import { CARDS, SEED_DECKS } from './project/lb-data.js';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const CATS  = ['Folclóricos','Históricos','Apoios','Feras','Plantas'];
-const CATC  = {Folclóricos:'#c2503f',Históricos:'#c79a48',Apoios:'#8a72b8',Feras:'#c47a3a',Plantas:'#5aa06f'};
+const CATC  = {Folclóricos:'#00a2ff',Históricos:'#c2503f',Apoios:'#c79a48',Feras:'#2a2929',Plantas:'#5aa06f'};
 const RARS  = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
-const RARC  = {Comum:'#9b9384',Raro:'#5f8fb0','Super raro':'#8a72b8','Ultra raro':'#c79a48',Lendário:'#c2503f'};
-const MAXC  = {Comum:4,Raro:3,'Super raro':2,'Ultra raro':2,Lendário:1};
+const RARC  = {Comum:'#c79a48',Raro:'#4caf50','Super raro':'#5f8fb0','Ultra raro':'#8a72b8',Lendário:'#9b9384'};
+const NC_IDS = new Set([124, 125]); // Pindorama e Terra de Vera Cruz — NC = max cópias
 const COLS  = ['DESCOBRIMENTO','EXPEDIÇÕES SECRETAS'];
 const MIN=40, MAX=80, KEY='lb_decks_v1';
 
@@ -306,7 +304,15 @@ function persist(decks){ try{ localStorage.setItem(KEY, JSON.stringify(decks)); 
 function updateDecks(decks){ persist(decks); setState({ decks }); }
 function cur(){ return s.decks[s.editingIdx]; }
 function total(d){ return (d.cards||[]).reduce((a,c)=>a+c.qty,0); }
-function maxCopies(card){ return MAXC[card.raridade]||3; }
+function maxCopies(card){
+  if(NC_IDS.has(card.id)) return parseInt(card.pc)||1; // NC: o campo pc É o limite de cópias
+  if(card.tipo==='a'||card.tipo==='e') return 3;        // Folclóricos e Plantas: sempre 3
+  const pc=parseInt(card.pc)||0;
+  if(pc<=3) return 4;
+  if(pc<=6) return 3;
+  if(pc<=8) return 2;
+  return 1; // pc 9-10
+}
 
 function mutateCur(fn){
   const decks = s.decks.slice();
@@ -506,10 +512,11 @@ function renderStats(){
 
   document.getElementById('stats-cnt').textContent=t+' cartas';
 
-  // Cost curve
+  // Cost curve — apenas cartas com PC real (exclui Folclóricos tipo=a e Plantas tipo=e)
   const bk={}; for(let i=1;i<=7;i++) bk[i]=0; bk['–']=0;
   d.cards.forEach(c=>{
     const card=s.byId[c.id]; if(!card) return;
+    if(card.tipo==='a'||card.tipo==='e') return; // ND/sem PC — não entra na curva
     const p=parseInt(card.pc);
     if(p>=1&&p<=7) bk[p]+=c.qty; else bk['–']+=c.qty;
   });
@@ -561,21 +568,18 @@ function renderCatalog(){
     const qty=qmap[card.id]||0;
     const imgUrl=String(card.imagem_url||'');
     const hasImg=imgUrl.length>0;
-    const pc=parseInt(card.pc)>=1?card.pc:'–';
-    const tip=`${card.nome} · PC ${pc} · ${card.raridade} · ${card.categoria}${card.efeito&&card.efeito!=='--'?'\n\n'+card.efeito:''}`;
+    const tip=`${card.nome} · ${card.raridade} · ${card.categoria}${card.efeito&&card.efeito!=='--'?'\n\n'+card.efeito:''}`;
     return `<div class="cc${qty>0?' indeck':''}" title="${esc(tip)}">
-  <div class="cc-img" style="border-bottom-color:${CATC[card.categoria]||'#888'}" onclick="app.add(${card.id})">
-    ${hasImg?`<img src="${esc(imgUrl)}" alt="${esc(card.nome)}" referrerpolicy="no-referrer" decoding="async">`:`<span class="cc-ph">Nº ${esc(card.num)}</span>`}
-    <div class="cc-pc">${esc(pc)}</div>
-    <div class="cc-rd" style="background:${RARC[card.raridade]||'#888'}"></div>
+  <div class="cc-img" onclick="app.add(${card.id})">
+    ${hasImg?`<img src="${esc(imgUrl)}" alt="${esc(card.nome)}" referrerpolicy="no-referrer" decoding="async">`:`<span class="cc-ph">${esc(card.nome)}\nNº ${esc(card.num)}</span>`}
     ${qty>0?`<div class="cc-qb">${qty}</div>`:''}
   </div>
-  <div class="cc-info">
-    <span class="cc-name">${esc(card.nome)}</span>
+  <div class="cc-acts">
     ${qty===0
       ? `<button class="btn-add" onclick="app.add(${card.id})">+ Adicionar</button>`
       : `<div class="qty-ctrl">
            <button class="btn-q" onclick="app.dec(${card.id})">−</button>
+           <span class="btn-q-n">${qty}</span>
            <button class="btn-q" onclick="app.inc(${card.id})">+</button>
          </div>`
     }
