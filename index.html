@@ -699,7 +699,7 @@ function renderCatalog(){
     const hasImg=imgUrl.length>0;
     return `<div class="cc${qty>0?' indeck':''}">
   <div class="cc-img" onclick="app.add(${card.id})" oncontextmenu="event.preventDefault();app.zoom(${card.id})" ontouchstart="app.zoomStart(${card.id},event)" ontouchend="app.zoomEnd()" ontouchmove="app.zoomEnd()">
-    ${hasImg?`<img src="${esc(imgUrl)}" alt="${esc(card.nome)}" referrerpolicy="no-referrer" decoding="async">`:`<span class="cc-ph">${esc(card.nome)}\nNº ${esc(card.num)}</span>`}
+    ${hasImg?`<img src="${esc(imgUrl)}" alt="${esc(card.nome)}" data-id="${card.id}" referrerpolicy="no-referrer" loading="lazy">`:`<span class="cc-ph">${esc(card.nome)}\nNº ${esc(card.num)}</span>`}
   </div>
   <div class="cc-acts">
     ${qty===0
@@ -903,16 +903,16 @@ async function init(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const apiCards=await res.json();
 
-    // Build lookup maps — numero_id é o ID sequencial da planilha (= c.id no lb-data.js)
-    const byNumId={}, byNorm={};
+    // Build lookup map — numero_id é o ID sequencial da planilha (= c.id no lb-data.js)
+    // Usamos APENAS numero_id para evitar matches incorretos por nome similar
+    const byNumId={};
     apiCards.forEach(ac=>{
-      if(ac.numero_id) byNumId[ac.numero_id]=ac;
-      if(ac.nome) byNorm[norm(ac.nome)]=ac;
+      if(ac.numero_id!=null) byNumId[String(ac.numero_id)]=ac;
     });
 
     let filled=0; const unmatched=[];
     cards.forEach(c=>{
-      const apiData=byNumId[c.id]||byNorm[norm(c.nome)];
+      const apiData=byNumId[String(c.id)];
       if(apiData&&apiData.imagem_url){
         c.imagem_url=apiData.imagem_url;
         if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
@@ -930,11 +930,11 @@ async function init(){
       const res=await fetch('https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas');
       if(!res.ok) throw new Error('HTTP '+res.status);
       const apiCards=await res.json();
-      const byNumId2={}, byNorm={};
-      apiCards.forEach(ac=>{ if(ac.numero_id) byNumId2[ac.numero_id]=ac; if(ac.nome) byNorm[norm(ac.nome)]=ac; });
+      const byNumId2={};
+      apiCards.forEach(ac=>{ if(ac.numero_id!=null) byNumId2[String(ac.numero_id)]=ac; });
       let filled=0;
       cards.forEach(c=>{
-        const apiData=byNumId2[c.id]||byNorm[norm(c.nome)];
+        const apiData=byNumId2[String(c.id)];
         if(apiData&&apiData.imagem_url){ c.imagem_url=apiData.imagem_url; if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url; filled++; }
       });
       console.log('Imagens API (www): '+filled+'/'+cards.length+' casadas.');
