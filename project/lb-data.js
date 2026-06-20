@@ -1100,7 +1100,7 @@ export const CARDS = [
   {
     "id": 71,
     "num": "011/62-02",
-    "nome": "Vincente Yáñez Pinzón",
+    "nome": "Vicente Yáñez Pinzón",
     "categoria": "Históricos",
     "pc": "5",
     "pa": "6",
@@ -1680,7 +1680,7 @@ export const CARDS = [
   {
     "id": 107,
     "num": "047/62-02",
-    "nome": "Borboleta-coruja",
+    "nome": "Borboleta Coruja",
     "categoria": "Feras",
     "pc": "1",
     "pa": "1",
