@@ -903,16 +903,19 @@ async function init(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const apiCards=await res.json();
 
-    // Build lookup map — numero_id é o ID sequencial da planilha (= c.id no lb-data.js)
-    // Usamos APENAS numero_id para evitar matches incorretos por nome similar
-    const byNumId={};
+    // Build lookup maps
+    // byNorm: match por nome normalizado (mais confiável — imagem fica na carta certa)
+    // byNumId: fallback por numero_id (para cartas cujo nome da API difere)
+    const byNumId={}, byNorm={};
     apiCards.forEach(ac=>{
+      if(ac.nome) byNorm[norm(ac.nome)]=ac;
       if(ac.numero_id!=null) byNumId[String(ac.numero_id)]=ac;
     });
 
     let filled=0; const unmatched=[];
     cards.forEach(c=>{
-      const apiData=byNumId[String(c.id)];
+      // Nome primeiro para evitar collateral matches por numero_id da coleção 2
+      const apiData=byNorm[norm(c.nome)]||byNumId[String(c.id)];
       if(apiData&&apiData.imagem_url){
         c.imagem_url=apiData.imagem_url;
         if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
