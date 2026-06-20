@@ -198,6 +198,23 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
   #filter-toggle{display:block}
   #cat-filters{padding:0}
   #filter-body.collapsed{display:none}
+
+  /* Builder bar: 2 linhas no mobile */
+  #builder-bar{padding:7px 10px;gap:6px;flex-wrap:wrap}
+  #deck-name-in{flex:1 1 120px;min-width:0;font-size:14px}
+  .bld-sp{display:none}
+  .btn-exp,.btn-imp,.btn-del-deck{flex:1;text-align:center;padding:6px 6px;font-size:11px;min-width:0}
+
+  /* Card grid menor */
+  #card-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));padding:8px;gap:8px}
+  .cc-img{height:148px}
+
+  /* Home lista única coluna em telas pequenas */
+  #decks-grid{grid-template-columns:1fr}
+  .home-inner{padding:16px 14px 60px}
+
+  /* Header mais compacto */
+  #header{padding:9px 12px;gap:10px}
 }
 </style>
 </head>
@@ -545,6 +562,16 @@ function renderHome(){
 
 function renderBuilder(){
   const d=cur();
+
+  // Auto-colapsar filtros na primeira abertura em mobile
+  if(!_filterInited){
+    _filterInited=true;
+    if(s.isMobile){
+      document.getElementById('filter-body').classList.add('collapsed');
+      document.getElementById('filter-toggle').textContent='Filtros & Estatísticas ▾';
+    }
+  }
+
   // Bar
   const ni=document.getElementById('deck-name-in');
   if(ni !== document.activeElement) ni.value=d.nome;
@@ -877,6 +904,7 @@ window.app = {
 };
 
 // ── Responsive ────────────────────────────────────────────────────────────────
+let _filterInited=false;
 function checkMobile(){ setState({isMobile:window.innerWidth<880}); }
 window.addEventListener('resize', checkMobile);
 
@@ -903,19 +931,13 @@ async function init(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const apiCards=await res.json();
 
-    // Build lookup maps
-    // byNorm: match por nome normalizado (mais confiável — imagem fica na carta certa)
-    // byNumId: fallback por numero_id (para cartas cujo nome da API difere)
-    const byNumId={}, byNorm={};
-    apiCards.forEach(ac=>{
-      if(ac.nome) byNorm[norm(ac.nome)]=ac;
-      if(ac.numero_id!=null) byNumId[String(ac.numero_id)]=ac;
-    });
+    // Match por nome normalizado — único método confiável para coleção 2
+    const byNorm={};
+    apiCards.forEach(ac=>{ if(ac.nome) byNorm[norm(ac.nome)]=ac; });
 
     let filled=0; const unmatched=[];
     cards.forEach(c=>{
-      // Nome primeiro para evitar collateral matches por numero_id da coleção 2
-      const apiData=byNorm[norm(c.nome)]||byNumId[String(c.id)];
+      const apiData=byNorm[norm(c.nome)];
       if(apiData&&apiData.imagem_url){
         c.imagem_url=apiData.imagem_url;
         if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
@@ -933,11 +955,11 @@ async function init(){
       const res=await fetch('https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas');
       if(!res.ok) throw new Error('HTTP '+res.status);
       const apiCards=await res.json();
-      const byNumId2={};
-      apiCards.forEach(ac=>{ if(ac.numero_id!=null) byNumId2[String(ac.numero_id)]=ac; });
+      const byNorm2={};
+      apiCards.forEach(ac=>{ if(ac.nome) byNorm2[norm(ac.nome)]=ac; });
       let filled=0;
       cards.forEach(c=>{
-        const apiData=byNumId2[String(c.id)];
+        const apiData=byNorm2[norm(c.nome)];
         if(apiData&&apiData.imagem_url){ c.imagem_url=apiData.imagem_url; if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url; filled++; }
       });
       console.log('Imagens API (www): '+filled+'/'+cards.length+' casadas.');
