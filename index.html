@@ -210,6 +210,9 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
   #card-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));padding:8px;gap:8px}
   .cc-img{height:148px}
 
+  /* Stats box com scroll no mobile para não tomar tela toda */
+  #stats-box{max-height:240px;overflow-y:auto;flex:1 1 100%}
+
   /* Home lista única coluna em telas pequenas */
   #decks-grid{grid-template-columns:1fr}
   .home-inner{padding:16px 14px 60px}
