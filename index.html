@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lendas &amp; Batalhas — Deck Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+:root{
+  --bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;
+  --line:#2c2f6b;--text:#ece3d0;--muted:#9698c4;
+  --gold:#bea356;--red:#b14a3c;
+}
+body{background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#2c2f6b;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+input::placeholder,textarea::placeholder{color:#6a6d9c}
+button{cursor:pointer;font-family:inherit}
+
+/* ── Header ── */
+#header{flex:none;display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid var(--line);background:#0e0f37}
+#logo{display:flex;align-items:center;gap:11px;cursor:pointer;text-decoration:none;border:none;background:none}
+#logo-icon{width:38px;height:38px;border-radius:8px;background:linear-gradient(145deg,var(--gold),var(--red));display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:#1a130a;box-shadow:0 2px 6px rgba(0,0,0,.35);flex:none}
+.logo-game{font-family:'Cinzel',serif;font-weight:700;font-size:15px;letter-spacing:.05em;color:#bea356}
+.logo-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text)}
+#hdr-count{display:none;align-items:baseline;gap:6px;font-size:12px;color:var(--muted);margin-left:auto}
+#hdr-count .n{font-family:'Cinzel',serif;font-size:19px;font-weight:700}
+
+/* ── Loading ── */
+#loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+
+/* ── Home ── */
+#home{flex:1;overflow-y:auto;background:var(--bg2);display:none}
+.home-inner{max-width:1080px;margin:0 auto;padding:30px 22px 70px}
+.home-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.home-title{font-family:'Cinzel',serif;font-weight:700;font-size:29px;color:#bea356;flex:1}
+.home-sub{font-size:13px;color:var(--text);margin-bottom:24px}
+.btn-import{background:transparent;color:var(--text);border:1px solid var(--gold);border-radius:8px;padding:9px 15px;font-weight:600;font-size:13px}
+.btn-new{background:var(--gold);color:#1a130a;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;white-space:nowrap}
+#decks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.deck-card{border:1px solid var(--gold);border-radius:12px;padding:15px 16px;background:#0e0f37;transition:border-color .15s}
+.deck-card:hover{border-color:#d4b46a}
+.dc-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px}
+.dc-name{font-family:'Cinzel',serif;font-weight:600;font-size:17px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.dc-tag{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:2px 5px;align-self:center;flex:none}
+.btn-fav{background:none;border:none;font-size:19px;line-height:1;padding:2px 4px}
+.dc-count{display:flex;align-items:baseline;gap:7px;margin-bottom:11px}
+.dc-count .n{font-family:'Cinzel',serif;font-size:25px;font-weight:700}
+.dc-count .lbl{font-size:12px;color:var(--text)}
+.dc-count .badge{margin-left:auto;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.dc-bar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bg3);margin-bottom:13px}
+.dc-actions{display:flex;gap:7px}
+.btn-open{flex:1;background:var(--gold);color:#161616;border:1px solid var(--gold);border-radius:7px;padding:7px;font-weight:600;font-size:12px}
+.btn-dup{background:transparent;color:var(--text);border:1px solid var(--gold);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px}
+.btn-del{background:transparent;color:#d98a7e;border:1px solid var(--gold);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px}
+.empty-msg{text-align:center;color:var(--muted);font-size:14px;padding:60px 20px;border:1px dashed var(--line);border-radius:12px}
+
+/* ── Builder ── */
+#builder{flex:1;display:none;flex-direction:column;overflow:hidden}
+#builder-bar{flex:none;display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--bg2)}
+.btn-back{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px}
+#deck-name-in{font-family:'Cinzel',serif;font-weight:600;font-size:16px;background:transparent;border:none;border-bottom:1px dashed var(--line);color:var(--text);padding:4px 2px;min-width:120px;flex:0 1 240px;outline:none}
+#btn-fav-cur{background:none;border:none;font-size:19px;line-height:1}
+.bld-sp{flex:1}
+.btn-exp,.btn-imp,.btn-del-deck{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px}
+.btn-del-deck{color:#d98a7e}
+#tabs{flex:none;display:none;background:var(--bg2);border-bottom:1px solid var(--line)}
+.tab-btn{flex:1;padding:11px;background:none;border:none;font-family:inherit;font-weight:600;font-size:13px;border-bottom:2px solid transparent;color:var(--muted)}
+.tab-btn.active{border-bottom-color:var(--gold);color:var(--text)}
+#builder-body{flex:1;display:flex;overflow:hidden}
+
+/* ── Catalog pane ── */
+#cat-pane{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+#cat-filters{flex:none;padding:11px 14px;border-bottom:1px solid var(--line);background:#0e0f37;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.filter-col{flex:1 1 340px;min-width:240px;display:flex;flex-direction:column;gap:8px}
+#search-in{width:100%;border:1px solid var(--gold);border-radius:8px;color:var(--text);padding:9px 12px;font-family:inherit;font-size:13px;outline:none;background:var(--bg2)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.chip{border-radius:20px;padding:5px 11px;font-size:12px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--muted);white-space:nowrap}
+.chip.on{color:#16110a}
+.sep{width:1px;height:18px;background:var(--line);margin:0 2px;flex:none}
+.selects{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12px;outline:none}
+.res-cnt{font-size:11px;color:var(--muted)}
+.btn-clr{background:none;border:none;color:var(--gold);font-size:11px;font-weight:600;text-decoration:underline}
+#stats-box{flex:1 1 290px;min-width:230px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:none}
+.stats-hdr{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.stats-ttl{font-family:'Cinzel',serif;font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+#stats-cnt{font-size:11px;color:var(--muted)}
+.stats-row{display:flex;gap:16px;flex-wrap:wrap}
+.cost-col{flex:1 1 150px;min-width:140px}
+.rar-col{flex:1 1 130px;min-width:120px}
+.mini-lbl{font-size:10px;color:var(--muted);margin-bottom:5px}
+#cost-bars{display:flex;align-items:flex-end;gap:4px;height:46px}
+.cb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end}
+.cb-bar{width:100%;background:linear-gradient(180deg,var(--gold),var(--red));border-radius:2px 2px 0 0;min-height:2px}
+.cb-lbl{font-size:9px;color:var(--muted)}
+#rar-list{display:flex;flex-direction:column;gap:3px}
+.rar-row{display:flex;align-items:center;gap:6px}
+.rar-dot{width:7px;height:7px;border-radius:50%;flex:none}
+.rar-name{flex:1;font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rar-cnt{font-size:10px;color:var(--muted)}
+#card-grid{flex:1;overflow-y:auto;padding:11px 12px;background:#0e0f37;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;align-content:start}
+.cc{position:relative;border:2px solid var(--line);border-radius:10px;background:var(--bg2);display:flex;flex-direction:column}
+.cc.indeck{border-color:var(--gold)}
+.cc-img{position:relative;cursor:pointer;height:150px;flex:none;overflow:hidden;border-radius:8px 8px 0 0;border-bottom:3px solid var(--line);background:repeating-linear-gradient(45deg,#15175b,#15175b 7px,#191b62 7px,#191b62 14px);display:flex;align-items:center;justify-content:center;padding:6px}
+.cc-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cc-ph{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6a6d9c;text-align:center;line-height:1.5;position:relative;z-index:1}
+.cc-pc{position:absolute;top:5px;left:5px;width:23px;height:23px;border-radius:6px;background:rgba(11,12,46,.85);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:12px;color:var(--gold);z-index:2}
+.cc-rd{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px rgba(11,12,46,.7);z-index:2}
+.cc-qb{position:absolute;bottom:6px;right:6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:#1a130a;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2}
+.cc-info{padding:5px 6px;display:flex;flex-direction:column;gap:5px}
+.cc-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
+.btn-add{width:100%;border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:6px;padding:4px;font-size:11px;font-weight:600}
+.qty-ctrl{display:flex;align-items:center;gap:5px}
+.btn-q{flex:1;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1}
+.no-res{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:40px 10px}
+
+/* ── Deck pane ── */
+#deck-pane{flex:none;width:400px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);border-left:1px solid var(--line)}
+#deck-list{flex:1;overflow-y:auto;padding:13px 14px 34px}
+.vals{border:1px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:14px;background:var(--bg2)}
+.val-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:3px 0}
+.val-icon{font-weight:700;flex:none}
+.val-note{font-size:10px;color:#6f8076;margin-top:7px;border-top:1px solid var(--line);padding-top:6px}
+.deck-empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 10px;display:none}
+.grp{margin-bottom:14px}
+.grp-hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.grp-dot{width:9px;height:9px;border-radius:2px;flex:none}
+.grp-name{font-family:'Cinzel',serif;font-weight:600;font-size:13px;letter-spacing:.03em;color:var(--text)}
+.grp-cnt{font-size:11px;color:var(--muted)}
+.di{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;margin-bottom:4px;background:var(--bg3)}
+.di-pc{width:20px;text-align:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--gold)}
+.di-name{flex:1;min-width:0;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.di-rd{flex:none;width:7px;height:7px;border-radius:50%}
+.btn-dq{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center}
+.di-qty{min-width:15px;text-align:center;font-weight:700;font-size:13px}
+
+/* ── Modal ── */
+#modal{position:fixed;inset:0;background:rgba(8,12,10,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal-box{background:var(--bg2);border:1px solid var(--line);border-radius:14px;width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.55)}
+.modal-hdr{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+#modal-title{font-family:'Cinzel',serif;font-weight:600;font-size:17px;color:var(--text)}
+.modal-x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:23px;line-height:1;padding:0 4px}
+#modal-body{padding:16px 18px;overflow-y:auto}
+.mdesc{font-size:12px;color:var(--muted);margin-bottom:10px}
+.mta{width:100%;min-height:230px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:11px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;resize:vertical;outline:none}
+.mactions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.btn-cancel{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 16px;font-weight:600;font-size:13px}
+.btn-primary{background:var(--gold);color:#1a130a;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px}
+#import-msg{font-size:12px;margin-top:9px}
+
+/* ── Responsive ── */
+@media(max-width:879px){
+  #tabs{display:flex}
+  #deck-pane{width:auto;border-left:none;border-top:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app" style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+  <header id="header">
+    <button id="logo" onclick="app.goHome()">
+      <div id="logo-icon">L&amp;B</div>
+      <div>
+        <div class="logo-game">LENDAS &amp; BATALHAS</div>
+        <div class="logo-sub">Deck Builder</div>
+      </div>
+    </button>
+    <div id="hdr-count">
+      <span class="n" id="hdr-num">0</span>
+      <span>/ <span id="hdr-max">80</span> cartas</span>
+    </div>
+  </header>
+
+  <div id="loading">Carregando catálogo…</div>
+
+  <!-- ── Home ── -->
+  <div id="home">
+    <div class="home-inner">
+      <div class="home-top">
+        <h1 class="home-title">Meus Baralhos</h1>
+        <button class="btn-import" onclick="app.openImport()">Importar lista</button>
+        <button class="btn-new" onclick="app.newDeck()">+ Novo baralho</button>
+      </div>
+      <p class="home-sub">Monte e organize seus baralhos. Mínimo de 40 e máximo de 80 cartas por baralho.</p>
+      <div id="decks-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── Builder ── -->
+  <div id="builder">
+    <div id="builder-bar">
+      <button class="btn-back" onclick="app.goHome()">← Baralhos</button>
+      <input id="deck-name-in" type="text" placeholder="Nome do baralho" oninput="app.rename(this.value)">
+      <button id="btn-fav-cur" onclick="app.toggleFav()">☆</button>
+      <div class="bld-sp"></div>
+      <button class="btn-exp" onclick="app.openExport()">Exportar</button>
+      <button class="btn-imp" onclick="app.openImport()">Importar</button>
+      <button class="btn-del-deck" onclick="app.delCur()">Excluir</button>
+    </div>
+
+    <div id="tabs">
+      <button id="tab-cat" class="tab-btn active" onclick="app.setTab('catalog')">Catálogo</button>
+      <button id="tab-deck" class="tab-btn" onclick="app.setTab('deck')">Baralho · <span id="tab-cnt">0</span></button>
+    </div>
+
+    <div id="builder-body">
+      <!-- Catalog -->
+      <section id="cat-pane">
+        <div id="cat-filters">
+          <div class="filter-col">
+            <input id="search-in" type="text" placeholder="Buscar carta, efeito ou nº…" oninput="app.setSearch(this.value)">
+            <div class="chips" id="cat-chips"></div>
+            <div class="chips" id="rar-chips"></div>
+            <div class="selects">
+              <select id="pc-sel" class="fsel" onchange="app.setFPc(this.value)"></select>
+              <select id="col-sel" class="fsel" onchange="app.setFCol(this.value)"></select>
+              <span class="res-cnt" id="res-cnt">0 cartas</span>
+              <button class="btn-clr" onclick="app.clearFilters()">limpar</button>
+            </div>
+          </div>
+          <div id="stats-box">
+            <div class="stats-hdr">
+              <span class="stats-ttl">Estatísticas</span>
+              <span id="stats-cnt"></span>
+            </div>
+            <div class="stats-row">
+              <div class="cost-col">
+                <div class="mini-lbl">Curva de custo (PC)</div>
+                <div id="cost-bars"></div>
+              </div>
+              <div class="rar-col">
+                <div class="mini-lbl">Raridades</div>
+                <div id="rar-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="card-grid"></div>
+      </section>
+
+      <!-- Deck -->
+      <aside id="deck-pane">
+        <div id="deck-list">
+          <div class="vals" id="validations"></div>
+          <div class="deck-empty" id="deck-empty">Baralho vazio.<br>Adicione cartas pelo catálogo.</div>
+          <div id="groups"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div id="modal" onclick="app.closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <span id="modal-title">Modal</span>
+      <button class="modal-x" onclick="app.closeModal()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script type="module">
+import { CARDS, SEED_DECKS } from './project/lb-data.js';
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const CATS  = ['Folclóricos','Históricos','Apoios','Feras','Plantas'];
+const CATC  = {Folclóricos:'#c2503f',Históricos:'#c79a48',Apoios:'#8a72b8',Feras:'#c47a3a',Plantas:'#5aa06f'};
+const RARS  = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
+const RARC  = {Comum:'#9b9384',Raro:'#5f8fb0','Super raro':'#8a72b8','Ultra raro':'#c79a48',Lendário:'#c2503f'};
+const MAXC  = {Comum:4,Raro:3,'Super raro':2,'Ultra raro':2,Lendário:1};
+const COLS  = ['DESCOBRIMENTO','EXPEDIÇÕES SECRETAS'];
+const MIN=40, MAX=80, KEY='lb_decks_v1';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let s = {
+  loading: true,
+  view: 'home',   // 'home' | 'builder'
+  cards: [],
+  byId: {},
+  decks: [],
+  editingIdx: -1,
+  search: '',
+  fCat: 'Todas', fRar: 'Todas', fCol: 'Todas', fPc: 'Todas',
+  modal: null,    // null | 'export' | 'import'
+  importText: '',
+  importMsg: null,
+  copied: false,
+  isMobile: false,
+  tab: 'catalog', // 'catalog' | 'deck'
+};
+
+function setState(patch) { Object.assign(s, patch); render(); }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function norm(str){ return (str||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
+function esc(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function persist(decks){ try{ localStorage.setItem(KEY, JSON.stringify(decks)); }catch(e){} }
+function updateDecks(decks){ persist(decks); setState({ decks }); }
+function cur(){ return s.decks[s.editingIdx]; }
+function total(d){ return (d.cards||[]).reduce((a,c)=>a+c.qty,0); }
+function maxCopies(card){ return MAXC[card.raridade]||3; }
+
+function mutateCur(fn){
+  const decks = s.decks.slice();
+  const d = { ...decks[s.editingIdx], cards: decks[s.editingIdx].cards.map(c=>({...c})) };
+  fn(d);
+  decks[s.editingIdx] = d;
+  updateDecks(decks);
+}
+
+function add(id){
+  mutateCur(d=>{
+    const e=d.cards.find(c=>c.id===id);
+    if(e){ const mx=maxCopies(s.byId[id]); if(e.qty<mx) e.qty++; }
+    else d.cards.push({id,qty:1});
+  });
+}
+function inc(id){ add(id); }
+function dec(id){
+  mutateCur(d=>{
+    const e=d.cards.find(c=>c.id===id);
+    if(e){ e.qty--; if(e.qty<=0) d.cards=d.cards.filter(c=>c.id!==id); }
+  });
+}
+
+function exportText(d){
+  const out=[]; const t=total(d);
+  out.push('# '+d.nome+' — '+t+' cartas','');
+  CATS.forEach(cat=>{
+    const items=d.cards.filter(c=>s.byId[c.id]&&s.byId[c.id].categoria===cat)
+      .map(c=>({card:s.byId[c.id],qty:c.qty}))
+      .sort((a,b)=>(parseInt(a.card.pc)||99)-(parseInt(b.card.pc)||99)||a.card.nome.localeCompare(b.card.nome));
+    if(!items.length) return;
+    const sub=items.reduce((a,i)=>a+i.qty,0);
+    out.push('## '+cat+' ('+sub+')');
+    items.forEach(i=>out.push(i.qty+'x '+i.card.nome));
+    out.push('');
+  });
+  return out.join('\n').trim();
+}
+
+function doImport(){
+  const normN=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+  const nameMap={}, numMap={};
+  s.cards.forEach(c=>{ nameMap[normN(c.nome)]=c.id; numMap[normN(c.num)]=c.id; });
+  const lines=(s.importText||'').split('\n');
+  const acc={}; let missed=[]; let name='Baralho Importado';
+  lines.forEach(line=>{
+    let t=line.trim(); if(!t) return;
+    if(t[0]==='#'){ const m=t.replace(/^#+\s*/,'').replace(/—.*$/,'').trim(); if(m&&!/^\d/.test(m)) name=m; return; }
+    let qty=1, nm=t;
+    let mm=t.match(/^(\d+)\s*[x×]?\s+(.+)$/i);
+    if(mm){ qty=parseInt(mm[1]); nm=mm[2]; }
+    else{ mm=t.match(/^(.+?)\s*[x×]\s*(\d+)$/i); if(mm){ nm=mm[1]; qty=parseInt(mm[2]); } }
+    nm=nm.trim();
+    let id=nameMap[normN(nm)]; if(id==null) id=numMap[normN(nm)];
+    if(id==null){ missed.push(nm); return; }
+    acc[id]=(acc[id]||0)+qty;
+  });
+  const cards=Object.keys(acc).map(id=>({id:+id,qty:acc[id]}));
+  if(!cards.length){ setState({importMsg:{ok:false,text:'Nenhuma carta reconhecida. Use o formato "3x Nome da Carta".'}}); return; }
+  const decks=s.decks.slice();
+  decks.push({nome:name,fav:false,isExample:false,cards});
+  persist(decks);
+  if(missed.length) console.warn('Cartas não reconhecidas:',missed);
+  setState({decks,modal:null,view:'builder',editingIdx:decks.length-1,tab:'deck',importText:'',importMsg:null});
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+
+function render(){
+  // Loading / screens
+  document.getElementById('loading').style.display  = s.loading ? 'flex' : 'none';
+  document.getElementById('home').style.display     = (!s.loading && s.view==='home') ? 'block' : 'none';
+  document.getElementById('builder').style.display  = (!s.loading && s.view==='builder' && !!cur()) ? 'flex' : 'none';
+
+  if(s.loading) return;
+
+  // Header count
+  const hc = document.getElementById('hdr-count');
+  if(s.view==='builder' && cur()){
+    const t=total(cur()), legal=(t>=MIN && t<=MAX);
+    hc.style.display='flex';
+    document.getElementById('hdr-num').textContent=t;
+    document.getElementById('hdr-num').style.color=legal?'#6fa8dc':'#d98a7e';
+    document.getElementById('hdr-max').textContent=MAX;
+  } else {
+    hc.style.display='none';
+  }
+
+  if(s.view==='home') renderHome();
+  if(s.view==='builder' && cur()) renderBuilder();
+
+  // Modal
+  const mo = document.getElementById('modal');
+  mo.style.display = s.modal ? 'flex' : 'none';
+  if(s.modal) renderModal();
+}
+
+function renderHome(){
+  const grid = document.getElementById('decks-grid');
+  if(!s.decks.length){
+    grid.innerHTML='<div class="empty-msg">Nenhum baralho ainda. Crie um novo ou importe uma lista.</div>';
+    return;
+  }
+  const sorted=[...s.decks.map((d,i)=>({d,i}))].sort((a,b)=>(b.d.fav-a.d.fav));
+  grid.innerHTML = sorted.map(({d,i})=>{
+    const t=total(d), legal=(t>=MIN && t<=MAX);
+    const lColor=legal?'#6fa8dc':'#d98a7e', lBg=legal?'rgba(111,168,220,.16)':'rgba(217,138,126,.14)';
+    const lText=legal?'Válido':(t<MIN?('Faltam '+(MIN-t)):('Excede '+(t-MAX)));
+    const segs=CATS.map(cat=>{
+      const n=d.cards.filter(c=>s.byId[c.id]&&s.byId[c.id].categoria===cat).reduce((a,c)=>a+c.qty,0);
+      return n?`<div style="height:100%;width:${t?(n/t*100):0}%;background:${CATC[cat]}"></div>`:'';
+    }).join('');
+    return `<div class="deck-card" onclick="app.openDeck(${i})">
+  <div class="dc-top">
+    <span class="dc-name">${esc(d.nome)}</span>
+    ${d.isExample?'<span class="dc-tag">Exemplo</span>':''}
+    <button class="btn-fav" title="Favoritar" style="color:${d.fav?'var(--gold)':'#4a4d7a'}" onclick="event.stopPropagation();app.toggleFavIdx(${i})">${d.fav?'★':'☆'}</button>
+  </div>
+  <div class="dc-count">
+    <span class="n">${t}</span>
+    <span class="lbl">cartas</span>
+    <span class="badge" style="color:${lColor};background:${lBg}">${lText}</span>
+  </div>
+  <div class="dc-bar">${segs}</div>
+  <div class="dc-actions">
+    <button class="btn-open" onclick="event.stopPropagation();app.openDeck(${i})">Abrir</button>
+    <button class="btn-dup" onclick="event.stopPropagation();app.duplicate(${i})">Duplicar</button>
+    <button class="btn-del" onclick="event.stopPropagation();app.del(${i})">Excluir</button>
+  </div>
+</div>`;
+  }).join('');
+}
+
+function renderBuilder(){
+  const d=cur();
+  // Bar
+  const ni=document.getElementById('deck-name-in');
+  if(ni !== document.activeElement) ni.value=d.nome;
+  const bf=document.getElementById('btn-fav-cur');
+  bf.textContent=d.fav?'★':'☆';
+  bf.style.color=d.fav?'var(--gold)':'#4a4d7a';
+
+  // Tabs (mobile)
+  const t=total(d), isMobile=s.isMobile;
+  document.getElementById('tab-cnt').textContent=t;
+  document.getElementById('tab-cat').className='tab-btn'+(s.tab==='catalog'?' active':'');
+  document.getElementById('tab-deck').className='tab-btn'+(s.tab==='deck'?' active':'');
+
+  const showCat=!isMobile||s.tab==='catalog';
+  const showDeck=!isMobile||s.tab==='deck';
+  document.getElementById('tabs').style.display=isMobile?'flex':'none';
+  document.getElementById('cat-pane').style.display=showCat?'flex':'none';
+  document.getElementById('deck-pane').style.display=showDeck?'flex':'none';
+  document.getElementById('deck-pane').style.width=isMobile?'auto':'400px';
+
+  if(showCat){ renderFilters(); renderStats(); renderCatalog(); }
+  if(showDeck){ renderDeckPanel(); }
+}
+
+function renderFilters(){
+  // Category chips
+  const catEl=document.getElementById('cat-chips');
+  catEl.innerHTML=['Todas',...CATS].map(c=>{
+    const active=c===s.fCat;
+    const col=c==='Todas'?null:CATC[c];
+    const style=active?`border-color:${col||'var(--gold)'};background:${col||'var(--gold)'};color:#16110a`:'';
+    return `<button class="chip${active?' on':''}" style="${style}" onclick="app.setCat('${c}')">${esc(c)}</button>`;
+  }).join('')+'<span class="sep"></span>';
+
+  // Rarity chips
+  const rarEl=document.getElementById('rar-chips');
+  rarEl.innerHTML=['Todas',...RARS].map(r=>{
+    const active=r===s.fRar;
+    const col=r==='Todas'?null:RARC[r];
+    const style=active?`border-color:${col||'var(--gold)'};background:${col||'var(--gold)'};color:#16110a`:'';
+    return `<button class="chip${active?' on':''}" style="${style}" onclick="app.setRar('${r.replace(/'/g,"\\'")}')">${esc(r)}</button>`;
+  }).join('');
+
+  // PC select
+  const pcEl=document.getElementById('pc-sel');
+  const pcOpts=['Todas','1','2','3','4','5','6','7','–'];
+  pcEl.innerHTML=pcOpts.map(o=>`<option value="${o}"${o===s.fPc?' selected':''}>PC: ${o}</option>`).join('');
+
+  // Collection select
+  const colEl=document.getElementById('col-sel');
+  const colOpts=['Todas',...COLS];
+  colEl.innerHTML=colOpts.map(o=>`<option value="${o}"${o===s.fCol?' selected':''}>Coleção: ${o==='Todas'?'Todas':o}</option>`).join('');
+}
+
+function renderStats(){
+  const d=cur(); const t=total(d);
+  const box=document.getElementById('stats-box');
+  box.style.display=d.cards.length?'block':'none';
+  if(!d.cards.length) return;
+
+  document.getElementById('stats-cnt').textContent=t+' cartas';
+
+  // Cost curve
+  const bk={}; for(let i=1;i<=7;i++) bk[i]=0; bk['–']=0;
+  d.cards.forEach(c=>{
+    const card=s.byId[c.id]; if(!card) return;
+    const p=parseInt(card.pc);
+    if(p>=1&&p<=7) bk[p]+=c.qty; else bk['–']+=c.qty;
+  });
+  const maxB=Math.max(1,...Object.values(bk));
+  document.getElementById('cost-bars').innerHTML=Object.keys(bk).map(k=>`
+    <div class="cb-wrap">
+      <div class="cb-bar" style="height:${bk[k]/maxB*100}%"></div>
+      <span class="cb-lbl">${k}</span>
+    </div>`).join('');
+
+  // Rarity dist
+  const rd={}; RARS.forEach(r=>rd[r]=0);
+  d.cards.forEach(c=>{ const card=s.byId[c.id]; if(card&&rd[card.raridade]!=null) rd[card.raridade]+=c.qty; });
+  document.getElementById('rar-list').innerHTML=RARS.filter(r=>rd[r]>0).map(r=>`
+    <div class="rar-row">
+      <span class="rar-dot" style="background:${RARC[r]}"></span>
+      <span class="rar-name">${esc(r)}</span>
+      <span class="rar-cnt">${rd[r]}</span>
+    </div>`).join('');
+}
+
+function renderCatalog(){
+  const d=cur();
+  const q=(s.search||'').trim().toLowerCase();
+  const qmap={}; d.cards.forEach(c=>qmap[c.id]=c.qty);
+
+  let filtered=s.cards.filter(card=>{
+    if(s.fCat!=='Todas'&&card.categoria!==s.fCat) return false;
+    if(s.fRar!=='Todas'&&card.raridade!==s.fRar) return false;
+    if(s.fCol!=='Todas'&&card.colecao!==s.fCol) return false;
+    if(s.fPc!=='Todas'){
+      const p=parseInt(card.pc);
+      if(s.fPc==='–'){ if(p>=1) return false; }
+      else if(String(p)!==s.fPc) return false;
+    }
+    if(q&&!((card.nome||'').toLowerCase().includes(q)||(card.efeito||'').toLowerCase().includes(q)||(card.num||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  filtered.sort((a,b)=>CATS.indexOf(a.categoria)-CATS.indexOf(b.categoria)||(parseInt(a.pc)||99)-(parseInt(b.pc)||99)||a.nome.localeCompare(b.nome));
+
+  document.getElementById('res-cnt').textContent=filtered.length+' cartas';
+
+  if(!filtered.length){
+    document.getElementById('card-grid').innerHTML='<div class="no-res">Nenhuma carta encontrada com esses filtros.</div>';
+    return;
+  }
+
+  document.getElementById('card-grid').innerHTML=filtered.map(card=>{
+    const qty=qmap[card.id]||0;
+    const imgUrl=String(card.imagem_url||'');
+    const hasImg=imgUrl.length>0;
+    const pc=parseInt(card.pc)>=1?card.pc:'–';
+    const tip=`${card.nome} · PC ${pc} · ${card.raridade} · ${card.categoria}${card.efeito&&card.efeito!=='--'?'\n\n'+card.efeito:''}`;
+    return `<div class="cc${qty>0?' indeck':''}" title="${esc(tip)}">
+  <div class="cc-img" style="border-bottom-color:${CATC[card.categoria]||'#888'}" onclick="app.add(${card.id})">
+    ${hasImg?`<img src="${esc(imgUrl)}" alt="${esc(card.nome)}" referrerpolicy="no-referrer" decoding="async">`:`<span class="cc-ph">Nº ${esc(card.num)}</span>`}
+    <div class="cc-pc">${esc(pc)}</div>
+    <div class="cc-rd" style="background:${RARC[card.raridade]||'#888'}"></div>
+    ${qty>0?`<div class="cc-qb">${qty}</div>`:''}
+  </div>
+  <div class="cc-info">
+    <span class="cc-name">${esc(card.nome)}</span>
+    ${qty===0
+      ? `<button class="btn-add" onclick="app.add(${card.id})">+ Adicionar</button>`
+      : `<div class="qty-ctrl">
+           <button class="btn-q" onclick="app.dec(${card.id})">−</button>
+           <button class="btn-q" onclick="app.inc(${card.id})">+</button>
+         </div>`
+    }
+  </div>
+</div>`;
+  }).join('');
+}
+
+function renderDeckPanel(){
+  const d=cur(); const t=total(d);
+  const legal=(t>=MIN && t<=MAX);
+
+  // Validations
+  const viol=[];
+  d.cards.forEach(c=>{ const card=s.byId[c.id]; if(card){ const mx=maxCopies(card); if(c.qty>mx) viol.push(card.nome+' ('+c.qty+'/'+mx+')'); } });
+  const rows=[
+    {ok:t>=MIN, text:t>=MIN?('Mínimo de '+MIN+' cartas atingido ('+t+')'):('Faltam '+(MIN-t)+' carta(s) para o mínimo de '+MIN)},
+    {ok:t<=MAX, text:t<=MAX?('Dentro do máximo de '+MAX+' cartas'):('Excede o máximo — remova '+(t-MAX)+' carta(s)')},
+    {ok:viol.length===0, text:viol.length===0?'Cópias por carta dentro do limite':('Excesso de cópias: '+viol.join(', '))},
+  ];
+  document.getElementById('validations').innerHTML=rows.map(v=>`
+    <div class="val-row" style="color:${v.ok?'#6fa8dc':'#d98a7e'}">
+      <span class="val-icon">${v.ok?'✓':'!'}</span>
+      <span>${esc(v.text)}</span>
+    </div>`).join('')
+    +'<div class="val-note">Limites de cópia por raridade são uma sugestão — ajustáveis conforme o livro de regras.</div>';
+
+  // Empty state
+  document.getElementById('deck-empty').style.display=d.cards.length===0?'block':'none';
+
+  // Groups
+  const groups=CATS.map(cat=>{
+    const items=d.cards.filter(c=>s.byId[c.id]&&s.byId[c.id].categoria===cat)
+      .map(c=>({card:s.byId[c.id],qty:c.qty}))
+      .sort((a,b)=>(parseInt(a.card.pc)||99)-(parseInt(b.card.pc)||99)||a.card.nome.localeCompare(b.card.nome));
+    return {cat, count:items.reduce((a,i)=>a+i.qty,0), items};
+  }).filter(g=>g.count>0);
+
+  document.getElementById('groups').innerHTML=groups.map(g=>`
+    <div class="grp">
+      <div class="grp-hdr">
+        <span class="grp-dot" style="background:${CATC[g.cat]}"></span>
+        <span class="grp-name">${esc(g.cat)}</span>
+        <span class="grp-cnt">${g.count}</span>
+      </div>
+      ${g.items.map(it=>`
+      <div class="di">
+        <span class="di-pc">${parseInt(it.card.pc)>=1?it.card.pc:'–'}</span>
+        <span class="di-name" title="${esc(it.card.nome)}">${esc(it.card.nome)}</span>
+        <span class="di-rd" title="${esc(it.card.raridade)}" style="background:${RARC[it.card.raridade]}"></span>
+        <button class="btn-dq" onclick="app.dec(${it.card.id})">−</button>
+        <span class="di-qty">${it.qty}</span>
+        <button class="btn-dq" onclick="app.inc(${it.card.id})">+</button>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderModal(){
+  const title=document.getElementById('modal-title');
+  const body=document.getElementById('modal-body');
+
+  if(s.modal==='export'&&cur()){
+    const txt=exportText(cur());
+    title.textContent='Exportar baralho';
+    body.innerHTML=`
+      <p class="mdesc">Sua lista de baralho, uma carta por linha. Copie e compartilhe.</p>
+      <textarea class="mta" id="export-ta" readonly></textarea>
+      <div class="mactions">
+        <button class="btn-primary" id="copy-btn" onclick="app.copyExport()">${s.copied?'Copiado!':'Copiar lista'}</button>
+      </div>`;
+    document.getElementById('export-ta').value=txt;
+    return;
+  }
+
+  if(s.modal==='import'){
+    title.textContent='Importar lista';
+    body.innerHTML=`
+      <p class="mdesc">Cole uma lista no formato <b style="color:var(--text)">3x Boitatá</b> (uma por linha). Um novo baralho será criado.</p>
+      <textarea class="mta" id="import-ta" placeholder="3x Boitatá\n2x Vitória-régia\n1x D. João III" oninput="app.setImportText(this.value)">${esc(s.importText)}</textarea>
+      ${s.importMsg?`<div id="import-msg" style="color:${s.importMsg.ok?'#6fa8dc':'#d98a7e'}">${esc(s.importMsg.text)}</div>`:''}
+      <div class="mactions">
+        <button class="btn-cancel" onclick="app.closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="app.doImport()">Importar</button>
+      </div>`;
+    return;
+  }
+}
+
+// ── Public API (window.app) ───────────────────────────────────────────────────
+window.app = {
+  goHome(){ setState({view:'home',modal:null}); },
+
+  newDeck(){
+    const decks=s.decks.slice();
+    decks.push({nome:'Novo Baralho',fav:false,isExample:false,cards:[]});
+    persist(decks);
+    setState({decks,view:'builder',editingIdx:decks.length-1,tab:'catalog',search:'',fCat:'Todas',fRar:'Todas',fCol:'Todas',fPc:'Todas'});
+  },
+
+  openDeck(idx){ setState({view:'builder',editingIdx:idx,tab:'catalog'}); },
+
+  del(idx){
+    if(!window.confirm('Excluir este baralho? Esta ação não pode ser desfeita.')) return;
+    const decks=s.decks.slice(); decks.splice(idx,1);
+    persist(decks);
+    setState({decks,view:'home',editingIdx:-1,modal:null});
+  },
+
+  delCur(){ if(s.editingIdx>=0) this.del(s.editingIdx); },
+
+  duplicate(idx){
+    const decks=s.decks.slice(); const src=decks[idx];
+    decks.splice(idx+1,0,{nome:src.nome+' (cópia)',fav:false,isExample:false,cards:src.cards.map(c=>({...c}))});
+    updateDecks(decks);
+  },
+
+  toggleFavIdx(idx){
+    const decks=s.decks.slice(); decks[idx]={...decks[idx],fav:!decks[idx].fav};
+    updateDecks(decks);
+  },
+
+  toggleFav(){
+    if(s.editingIdx<0) return;
+    this.toggleFavIdx(s.editingIdx);
+  },
+
+  rename(v){ mutateCur(d=>{d.nome=v;}); },
+
+  add(id){ add(id); },
+  inc(id){ inc(id); },
+  dec(id){ dec(id); },
+
+  setSearch(v){ setState({search:v}); },
+  setCat(v){ setState({fCat:v}); },
+  setRar(v){ setState({fRar:v}); },
+  setFPc(v){ setState({fPc:v}); },
+  setFCol(v){ setState({fCol:v}); },
+  clearFilters(){ setState({search:'',fCat:'Todas',fRar:'Todas',fCol:'Todas',fPc:'Todas'}); document.getElementById('search-in').value=''; },
+
+  setTab(t){ setState({tab:t}); },
+
+  openExport(){ setState({modal:'export',copied:false}); },
+  openImport(){ setState({modal:'import',importText:'',importMsg:null}); },
+  closeModal(){ setState({modal:null,copied:false}); },
+
+  setImportText(v){ setState({importText:v}); },
+
+  doImport(){ doImport(); },
+
+  copyExport(){
+    if(!cur()) return;
+    try{ navigator.clipboard.writeText(exportText(cur())).then(()=>setState({copied:true})); }
+    catch(e){ const ta=document.getElementById('export-ta'); if(ta){ta.select();document.execCommand('copy');} setState({copied:true}); }
+  },
+};
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+function checkMobile(){ setState({isMobile:window.innerWidth<880}); }
+window.addEventListener('resize', checkMobile);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init(){
+  // Load card data from lb-data.js
+  const cards = CARDS.map(c=>({...c}));
+  const byId  = {};
+  cards.forEach(c=>byId[c.id]=c);
+
+  // Load saved decks or seed examples
+  let decks=null;
+  try{ const saved=localStorage.getItem(KEY); if(saved) decks=JSON.parse(saved); }catch(e){}
+  if(!decks){
+    decks=SEED_DECKS.map(d=>({nome:d.nome,fav:false,isExample:true,cards:d.cards.map(c=>({...c}))}));
+  }
+
+  setState({loading:false,cards,byId,decks,isMobile:window.innerWidth<880});
+
+  // Enrich with images from the API (non-blocking)
+  try{
+    const url='https://lendasebatalhas.com.br/wp-json/lendas/v1/cartas';
+    const res=await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const apiCards=await res.json();
+
+    // Build lookup maps — numero_id é o ID sequencial da planilha (= c.id no lb-data.js)
+    const byNumId={}, byNorm={};
+    apiCards.forEach(ac=>{
+      if(ac.numero_id) byNumId[ac.numero_id]=ac;
+      if(ac.nome) byNorm[norm(ac.nome)]=ac;
+    });
+
+    let filled=0; const unmatched=[];
+    cards.forEach(c=>{
+      const apiData=byNumId[c.id]||byNorm[norm(c.nome)];
+      if(apiData&&apiData.imagem_url){
+        c.imagem_url=apiData.imagem_url;
+        if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
+        filled++;
+      } else {
+        unmatched.push(c.nome);
+      }
+    });
+    console.log('Imagens API: '+filled+'/'+cards.length+' casadas.');
+    if(unmatched.length) console.warn('Sem imagem na API:',unmatched);
+    setState({cards:cards.slice()});
+  }catch(e){
+    // Try with www as fallback
+    try{
+      const res=await fetch('https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas');
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const apiCards=await res.json();
+      const byNumId2={}, byNorm={};
+      apiCards.forEach(ac=>{ if(ac.numero_id) byNumId2[ac.numero_id]=ac; if(ac.nome) byNorm[norm(ac.nome)]=ac; });
+      let filled=0;
+      cards.forEach(c=>{
+        const apiData=byNumId2[c.id]||byNorm[norm(c.nome)];
+        if(apiData&&apiData.imagem_url){ c.imagem_url=apiData.imagem_url; if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url; filled++; }
+      });
+      console.log('Imagens API (www): '+filled+'/'+cards.length+' casadas.');
+      setState({cards:cards.slice()});
+    }catch(e2){
+      console.warn('API de imagens indisponível (CORS?):', e2.message||e2);
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>
