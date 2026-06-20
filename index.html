@@ -123,10 +123,6 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 /* ── Deck pane ── */
 #deck-pane{flex:none;width:400px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);border-left:1px solid var(--line)}
 #deck-list{flex:1;overflow-y:auto;padding:13px 14px 34px}
-.vals{border:1px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:14px;background:var(--bg2)}
-.val-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:3px 0}
-.val-icon{font-weight:700;flex:none}
-.val-note{font-size:10px;color:#6f8076;margin-top:7px;border-top:1px solid var(--line);padding-top:6px}
 .deck-empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 10px;display:none}
 .grp{margin-bottom:14px}
 .grp-hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -168,7 +164,7 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 
   <header id="header">
     <button id="logo" onclick="app.goHome()">
-      <div id="logo-icon">L&amp;B</div>
+      <img id="logo-icon" src="./logo.png" alt="L&B" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div id="logo-icon-fb" style="display:none;width:38px;height:38px;border-radius:8px;background:linear-gradient(145deg,var(--gold),var(--red));align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:#1a130a;box-shadow:0 2px 6px rgba(0,0,0,.35);flex:none">L&amp;B</div>
       <div>
         <div class="logo-game">LENDAS &amp; BATALHAS</div>
         <div class="logo-sub">Deck Builder</div>
@@ -250,7 +246,6 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
       <!-- Deck -->
       <aside id="deck-pane">
         <div id="deck-list">
-          <div class="vals" id="validations"></div>
           <div class="deck-empty" id="deck-empty">Baralho vazio.<br>Adicione cartas pelo catálogo.</div>
           <div id="groups"></div>
         </div>
@@ -392,10 +387,11 @@ function render(){
   // Header count
   const hc = document.getElementById('hdr-count');
   if(s.view==='builder' && cur()){
-    const t=total(cur()), legal=(t>=MIN && t<=MAX);
+    const t=total(cur());
+    const numColor = t===MAX ? '#bea356' : t>=MIN ? '#5aa06f' : '#d98a7e';
     hc.style.display='flex';
     document.getElementById('hdr-num').textContent=t;
-    document.getElementById('hdr-num').style.color=legal?'#6fa8dc':'#d98a7e';
+    document.getElementById('hdr-num').style.color=numColor;
     document.getElementById('hdr-max').textContent=MAX;
   } else {
     hc.style.display='none';
@@ -592,20 +588,6 @@ function renderDeckPanel(){
   const d=cur(); const t=total(d);
   const legal=(t>=MIN && t<=MAX);
 
-  // Validations
-  const viol=[];
-  d.cards.forEach(c=>{ const card=s.byId[c.id]; if(card){ const mx=maxCopies(card); if(c.qty>mx) viol.push(card.nome+' ('+c.qty+'/'+mx+')'); } });
-  const rows=[
-    {ok:t>=MIN, text:t>=MIN?('Mínimo de '+MIN+' cartas atingido ('+t+')'):('Faltam '+(MIN-t)+' carta(s) para o mínimo de '+MIN)},
-    {ok:t<=MAX, text:t<=MAX?('Dentro do máximo de '+MAX+' cartas'):('Excede o máximo — remova '+(t-MAX)+' carta(s)')},
-    {ok:viol.length===0, text:viol.length===0?'Cópias por carta dentro do limite':('Excesso de cópias: '+viol.join(', '))},
-  ];
-  document.getElementById('validations').innerHTML=rows.map(v=>`
-    <div class="val-row" style="color:${v.ok?'#6fa8dc':'#d98a7e'}">
-      <span class="val-icon">${v.ok?'✓':'!'}</span>
-      <span>${esc(v.text)}</span>
-    </div>`).join('')
-    +'<div class="val-note">Limites de cópia por raridade são uma sugestão — ajustáveis conforme o livro de regras.</div>';
 
   // Empty state
   document.getElementById('deck-empty').style.display=d.cards.length===0?'block':'none';
