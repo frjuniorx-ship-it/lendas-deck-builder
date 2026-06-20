@@ -200,10 +200,11 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
   #filter-body.collapsed{display:none}
 
   /* Builder bar: 2 linhas no mobile */
-  #builder-bar{padding:7px 10px;gap:6px;flex-wrap:wrap}
-  #deck-name-in{flex:1 1 120px;min-width:0;font-size:14px}
-  .bld-sp{display:none}
-  .btn-exp,.btn-imp,.btn-del-deck{flex:1;text-align:center;padding:6px 6px;font-size:11px;min-width:0}
+  #builder-bar{padding:7px 10px;gap:5px;flex-wrap:wrap}
+  #deck-name-in{flex:1 1 0;min-width:0;font-size:14px}
+  /* bld-sp vira quebra de linha invisível forçando botões secundários para 2ª linha */
+  .bld-sp{flex:0 0 100%;height:0}
+  .btn-exp,.btn-imp,.btn-del-deck{flex:1;text-align:center;padding:6px 4px;font-size:11px;min-width:0}
 
   /* Card grid menor */
   #card-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));padding:8px;gap:8px}
