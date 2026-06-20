@@ -934,7 +934,7 @@ async function init(){
     // normApi: strip everything except a-z0-9 (handles hyphens, dots, spaces)
     const normApi=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
     // Aliases: lb-data normalized name → alternative API normalized name to try
-    const ALIASES={'passarofogo':'passarodofogo','aflordomandacaru':'flordomandacaru','djoaoiii':'domjoaoiii'};
+    const ALIASES={'passarofogo':'passarodefogo','aflordomandacaru':'flordomandacaru','djoaoiii':'domjoaoiii'};
     const byNorm={}, byNumId={};
     apiCards.forEach(ac=>{
       if(ac.nome) byNorm[normApi(ac.nome)]=ac;
