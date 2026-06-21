@@ -1578,7 +1578,7 @@ export const CARDS = [
     ],
     "colecao": "EXPEDIÇÕES SECRETAS",
     "raridade": "Comum",
-    "efeito": "--",
+    "efeito": "É permitido ter um número qualquer de cópias dessa carta no baralho.",
     "tipo": "d"
   },
   {
