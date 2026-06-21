@@ -219,6 +219,9 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 
   /* Header mais compacto */
   #header{padding:9px 12px;gap:10px}
+
+  /* Evita zoom automático do iOS em inputs com fonte < 16px */
+  .mta,#search-in,#deck-name-in,.custom-in{font-size:16px}
 }
 </style>
 </head>
@@ -470,6 +473,9 @@ function exportText(d){
 }
 
 function doImport(){
+  // Lê direto do DOM — sem oninput para não re-renderizar a cada tecla
+  const ta=document.getElementById('import-ta');
+  if(ta) s.importText=ta.value;
   const normN=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
   const nameMap={}, numMap={};
   s.cards.forEach(c=>{ nameMap[normN(c.nome)]=c.id; numMap[normN(c.num)]=c.id; });
@@ -805,7 +811,7 @@ function renderModal(){
     title.textContent='Importar lista';
     body.innerHTML=`
       <p class="mdesc">Cole uma lista no formato <b style="color:var(--text)">3x Boitatá</b> (uma por linha). Um novo baralho será criado.</p>
-      <textarea class="mta" id="import-ta" placeholder="3x Boitatá\n2x Vitória-régia\n1x D. João III" oninput="app.setImportText(this.value)">${esc(s.importText)}</textarea>
+      <textarea class="mta" id="import-ta" placeholder="3x Boitatá\n2x Vitória-régia\n1x D. João III">${esc(s.importText)}</textarea>
       ${s.importMsg?`<div id="import-msg" style="color:${s.importMsg.ok?'#6fa8dc':'#d98a7e'}">${esc(s.importMsg.text)}</div>`:''}
       <div class="mactions">
         <button class="btn-cancel" onclick="app.closeModal()">Cancelar</button>
@@ -899,7 +905,7 @@ window.app = {
   openImport(){ setState({modal:'import',importText:'',importMsg:null}); },
   closeModal(){ setState({modal:null,copied:false}); },
 
-  setImportText(v){ setState({importText:v}); },
+  setImportText(v){ s.importText=v; },
 
   doImport(){ doImport(); },
 
