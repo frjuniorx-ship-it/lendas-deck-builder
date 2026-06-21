@@ -918,7 +918,7 @@ window.app = {
 
 // ── Responsive ────────────────────────────────────────────────────────────────
 let _filterInited=false;
-function checkMobile(){ setState({isMobile:window.innerWidth<880}); }
+function checkMobile(){ const m=window.innerWidth<880; if(m!==s.isMobile) setState({isMobile:m}); }
 window.addEventListener('resize', checkMobile);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
