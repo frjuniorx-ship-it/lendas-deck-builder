@@ -961,6 +961,22 @@ async function init(){
     return;
   }
 
+  // Keywords: extraídas de effect_blocks (estruturado) + fallback em texto livre (lista fixa)
+  const KNOWN_KW=['ATRAIR','FRENESI','REGENERAR','IMOBILIZAR','INVESTIR','ATRAVESSAR',
+    'IGNORAR','FÚRIA','MUTÁVEL','PROTEGER','RESISTÊNCIA','VENENO MORTAL','ARRUINAR',
+    'INTIMIDAR','CURE','CURAR','ABSORVER CONHECIMENTO','REMOÇÃO DE ENCANTAMENTO','REMOÇÃO DE MAGIA'];
+  function extrairKeywords(c){
+    const kws=new Set();
+    (c.effect_blocks||[]).forEach(b=>{
+      (b.actions||[]).forEach(a=>{
+        (a.effect_reference||[]).forEach(r=>{ if(r.name) kws.add(r.name.toUpperCase()); });
+      });
+    });
+    const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento].filter(Boolean).join(' ').toUpperCase();
+    KNOWN_KW.forEach(kw=>{ if(text.includes(kw)) kws.add(kw); });
+    return [...kws];
+  }
+
   // 2. Mapeia campos da API para o formato interno
   const cards=apiData.map(c=>{
     const isFolc=c.tipo==='Folclórica';
@@ -968,6 +984,9 @@ async function init(){
     const expName=(c.expansao?.nome||'').toUpperCase();
     const info=EXP_INFO[expName];
     const n=String(c.numero_id||0).padStart(3,'0');
+    // efeito = texto descritivo completo (para busca e detecção de regras como cópias ilimitadas)
+    const efeito=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao,c.encantamento]
+      .filter((v,i,a)=>v&&a.indexOf(v)===i).join(' ');
     return{
       id:        c.wp_id,
       nome:      c.nome||'',
@@ -981,8 +1000,9 @@ async function init(){
       pd:        c.defesa!=null?String(c.defesa):'--',
       pc:        pc!=null?String(pc):'--',
       classes:   c.classes||c.classes_folclorica||[],
-      keywords:  (c.efeito||[]).map(e=>(e.name||'').toUpperCase()).filter(Boolean),
-      efeito:    (c.efeito||[]).map(e=>e.name||'').filter(Boolean).join(' '),
+      mecanica:  c.mecanica||[],
+      keywords:  extrairKeywords(c),
+      efeito,
       imagem_url:c.imagem_url||'',
     };
   });
