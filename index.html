@@ -391,9 +391,9 @@ const CATS  = ['Folclóricos','Históricos','Apoios','Feras','Plantas'];
 const CATC  = {Folclóricos:'#00a2ff',Históricos:'#c2503f',Apoios:'#c79a48',Feras:'#2a2929',Plantas:'#5aa06f'};
 const RARS  = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
 const RARC  = {Comum:'#c79a48',Raro:'#4caf50','Super raro':'#5f8fb0','Ultra raro':'#8a72b8',Lendário:'#9b9384'};
-const NC_IDS = new Set([124, 125]); // Pindorama e Terra de Vera Cruz — NC = max cópias
-const COLS  = ['DESCOBRIMENTO','EXPEDIÇÕES SECRETAS'];
-const MIN=40, MAX=80, KEY='lb_decks_v1';
+const NC_NAMES = new Set(['Pindorama','Terra de Vera Cruz']); // limite de cópias = valor do campo pc
+let COLS  = []; // derivado da API (novas coleções aparecem automaticamente)
+const MIN=40, MAX=80, KEY='lb_decks_v2';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let s = {
@@ -424,7 +424,7 @@ function cur(){ return s.decks[s.editingIdx]; }
 function total(d){ return (d.cards||[]).reduce((a,c)=>a+c.qty,0); }
 function maxCopies(card){
   if((card.efeito||'').includes('número qualquer de cópias')) return 999;
-  if(NC_IDS.has(card.id)) return parseInt(card.pc)||1; // NC: o campo pc É o limite de cópias
+  if(NC_NAMES.has(card.nome)) return parseInt(card.pc)||1;
   if(card.tipo==='a'||card.tipo==='e') return 3;        // Folclóricos e Plantas: sempre 3
   const pc=parseInt(card.pc)||0;
   if(pc<=3) return 4;
@@ -921,80 +921,116 @@ let _filterInited=false;
 function checkMobile(){ const m=window.innerWidth<880; if(m!==s.isMobile) setState({isMobile:m}); }
 window.addEventListener('resize', checkMobile);
 
+// ── API fetch com cache offline ───────────────────────────────────────────────
+const CACHE_KEY='lb_api_v1';
+async function fetchApiCards(){
+  const urls=[
+    'https://lendasebatalhas.com.br/wp-json/lendas/v1/cartas',
+    'https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas',
+  ];
+  for(const url of urls){
+    try{
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(),12000);
+      const r=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(t);
+      if(!r.ok) continue;
+      const data=await r.json();
+      try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data})); }catch(e){}
+      return data;
+    }catch(e){}
+  }
+  // Fallback: cache local (funciona offline)
+  try{
+    const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    if(c?.data){ console.warn('API offline — usando cache local'); return c.data; }
+  }catch(e){}
+  throw new Error('API indisponível e sem cache');
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
-  // Load card data from lb-data.js
-  const cards = CARDS.map(c=>({...c}));
-  const byId  = {};
+  const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Planta':'e'};
+  const CAT_MAP={'Folclórica':'Folclóricos','Histórica':'Históricos','Apoio':'Apoios','Fera':'Feras','Planta':'Plantas'};
+  const EXP_INFO={'DESCOBRIMENTO':{total:60,col:'01'},'EXPEDIÇÕES SECRETAS':{total:62,col:'02'}};
+  const normA=v=>(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+
+  // 1. Busca todos os dados das cartas na API
+  let apiData;
+  try{ apiData=await fetchApiCards(); }
+  catch(e){
+    document.getElementById('loading').innerHTML='<span style="color:#d98a7e;text-align:center">Erro ao carregar cartas.<br>Verifique sua conexão e recarregue a página.</span>';
+    return;
+  }
+
+  // 2. Mapeia campos da API para o formato interno
+  const cards=apiData.map(c=>{
+    const isFolc=c.tipo==='Folclórica';
+    const pc=isFolc?c.numero_descarte:c.pontos_conhecimento;
+    const expName=(c.expansao?.nome||'').toUpperCase();
+    const info=EXP_INFO[expName];
+    const n=String(c.numero_id||0).padStart(3,'0');
+    return{
+      id:        c.wp_id,
+      nome:      c.nome||'',
+      tipo:      TIPO_MAP[c.tipo]||'b',
+      categoria: CAT_MAP[c.tipo]||c.tipo||'',
+      raridade:  c.raridade||'',
+      colecao:   expName,
+      numero_id: c.numero_id,
+      num:       info?`${n}/${info.total}-${info.col}`:n,
+      pa:        c.ataque!=null?String(c.ataque):'--',
+      pd:        c.defesa!=null?String(c.defesa):'--',
+      pc:        pc!=null?String(pc):'--',
+      classes:   c.classes||c.classes_folclorica||[],
+      efeito:    (c.efeito||[]).map(e=>e.name||'').filter(Boolean).join(' '),
+      imagem_url:c.imagem_url||'',
+    };
+  });
+
+  const byId={};
   cards.forEach(c=>byId[c.id]=c);
 
-  // Load saved decks or seed examples
+  // 3. Deriva coleções disponíveis (novas coleções aparecem automaticamente)
+  const seen=new Set();
+  COLS.length=0;
+  cards.forEach(c=>{ if(c.colecao&&!seen.has(c.colecao)){seen.add(c.colecao);COLS.push(c.colecao);} });
+
+  // 4. Mapa nome-normalizado → wp_id (para migração e import)
+  const normToId={};
+  cards.forEach(c=>{ normToId[normA(c.nome)]=c.id; });
+
+  // 5. Mapa de migração: id antigo (lb-data 1-125) → wp_id (via nome)
+  const oldToNew={};
+  CARDS.forEach(oc=>{ const nid=normToId[normA(oc.nome)]; if(nid) oldToNew[oc.id]=nid; });
+
+  function migrateCards(oldCards){
+    return(oldCards||[]).map(c=>{ const nid=oldToNew[c.id]; return nid?{...c,id:nid}:null; }).filter(Boolean);
+  }
+
+  // 6. Carrega baralhos salvos (ou migra do formato antigo v1)
   let decks=null;
   try{ const saved=localStorage.getItem(KEY); if(saved) decks=JSON.parse(saved); }catch(e){}
+
   if(!decks){
-    decks=SEED_DECKS.map(d=>({nome:d.nome,fav:false,isExample:true,cards:d.cards.map(c=>({...c}))}));
+    try{
+      const old=localStorage.getItem('lb_decks_v1');
+      if(old){
+        const oldDecks=JSON.parse(old);
+        decks=oldDecks.map(d=>({...d,cards:migrateCards(d.cards)}));
+        localStorage.setItem(KEY,JSON.stringify(decks));
+        localStorage.removeItem('lb_decks_v1');
+        console.log('Baralhos migrados de v1 para v2 (wp_id).');
+      }
+    }catch(e){}
+  }
+
+  if(!decks){
+    // Primeira vez — semeia com baralhos de exemplo (IDs do SEED_DECKS também migrados)
+    decks=SEED_DECKS.map(d=>({nome:d.nome,fav:false,isExample:true,cards:migrateCards(d.cards)}));
   }
 
   setState({loading:false,cards,byId,decks,view:'landing',isMobile:window.innerWidth<880});
-
-  // Enrich with images from the API (non-blocking)
-  try{
-    const url='https://lendasebatalhas.com.br/wp-json/lendas/v1/cartas';
-    const res=await fetch(url);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const apiCards=await res.json();
-
-    // normApi: strip everything except a-z0-9 (handles hyphens, dots, spaces)
-    const normApi=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
-    // Aliases: lb-data normalized name → alternative API normalized name to try
-    const ALIASES={'passarofogo':'passarodefogo','aflordomandacaru':'flordomandacaru','djoaoiii':'domjoaoiii'};
-    const byNorm={}, byNumId={};
-    apiCards.forEach(ac=>{
-      if(ac.nome) byNorm[normApi(ac.nome)]=ac;
-      if(ac.numero_id!=null) byNumId[String(ac.numero_id)]=ac;
-    });
-
-    let filled=0; const unmatched=[];
-    cards.forEach(c=>{
-      // Name match first (handles API name variants like hyphens vs spaces)
-      // byNumId fallback ONLY for col 1 (ids 1-60): numero_id = c.id there
-      // Col 2 (ids 61-125) must NOT use byNumId — their numero_id restarts at 1 in the API
-      const nn=normApi(c.nome);
-      const apiData=byNorm[nn]||byNorm[ALIASES[nn]]||(c.id<=60?byNumId[String(c.id)]:null);
-      if(apiData&&apiData.imagem_url){
-        c.imagem_url=apiData.imagem_url;
-        if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url;
-        filled++;
-      } else {
-        unmatched.push(c.nome);
-      }
-    });
-    console.log('Imagens API: '+filled+'/'+cards.length+' casadas.');
-    if(unmatched.length) console.warn('Sem imagem na API:',unmatched);
-    setState({cards:cards.slice()});
-  }catch(e){
-    // Try with www as fallback
-    try{
-      const res=await fetch('https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas');
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const apiCards=await res.json();
-      const normApi2=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
-      const byNorm2={}, byNumId2={};
-      apiCards.forEach(ac=>{
-        if(ac.nome) byNorm2[normApi2(ac.nome)]=ac;
-        if(ac.numero_id!=null) byNumId2[String(ac.numero_id)]=ac;
-      });
-      let filled=0;
-      cards.forEach(c=>{
-        const apiData=byNorm2[normApi2(c.nome)]||(c.id<=60?byNumId2[String(c.id)]:null);
-        if(apiData&&apiData.imagem_url){ c.imagem_url=apiData.imagem_url; if(byId[c.id]) byId[c.id].imagem_url=apiData.imagem_url; filled++; }
-      });
-      console.log('Imagens API (www): '+filled+'/'+cards.length+' casadas.');
-      setState({cards:cards.slice()});
-    }catch(e2){
-      console.warn('API de imagens indisponível (CORS?):', e2.message||e2);
-    }
-  }
 }
 
 init();
