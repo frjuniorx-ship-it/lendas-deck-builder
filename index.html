@@ -695,13 +695,11 @@ function renderStats(){
       <span class="type-cnt">${n}</span>
     </div>`).join(''):'<span style="font-size:10px;color:var(--muted)">—</span>';
 
-  // Keywords: extract ALL-CAPS words (3+ chars) from efeito, excluding common noise
-  const KW_IGNORE=new Set(['UMA','QUE','COM','SEM','POR','PARA','EM','DE','DO','DA','SE','AO','OS','AS','OU','MAS','ATÉ','SUA','SEU','NÃO','TODO','CADA','ESSE','ESSA','ESTE','NUM','NUM','MAR','SOB','ELE','ELA']);
+  // Keywords: usa o glossário estruturado da API (efeito[].name), sem regex
   const kwCnt={};
   d.cards.forEach(c=>{
-    const card=s.byId[c.id]; if(!card||!card.efeito||card.efeito==='--') return;
-    const words=(card.efeito.match(/\b[A-ZÁÉÍÓÚÃÕÂÊÔÀÜÇ]{3,}\b/g)||[]);
-    words.forEach(w=>{ if(!KW_IGNORE.has(w)) kwCnt[w]=(kwCnt[w]||0)+c.qty; });
+    const card=s.byId[c.id]; if(!card) return;
+    (card.keywords||[]).forEach(kw=>{ kwCnt[kw]=(kwCnt[kw]||0)+c.qty; });
   });
   const kwEntries=Object.entries(kwCnt).sort((a,b)=>b[1]-a[1]).slice(0,20);
   document.getElementById('stats-kw').innerHTML=kwEntries.length?kwEntries.map(([kw,n])=>`<span class="kw-tag">${kw} ×${n}</span>`).join(''):'<span style="font-size:10px;color:var(--muted)">Nenhuma keyword encontrada</span>';
@@ -983,6 +981,7 @@ async function init(){
       pd:        c.defesa!=null?String(c.defesa):'--',
       pc:        pc!=null?String(pc):'--',
       classes:   c.classes||c.classes_folclorica||[],
+      keywords:  (c.efeito||[]).map(e=>(e.name||'').toUpperCase()).filter(Boolean),
       efeito:    (c.efeito||[]).map(e=>e.name||'').filter(Boolean).join(' '),
       imagem_url:c.imagem_url||'',
     };
