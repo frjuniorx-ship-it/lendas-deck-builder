@@ -193,6 +193,17 @@ async function init(){
     });
   }
 
+  // 3. Fallback de texto: detecta keywords nos campos de efeito que não vieram via effect_reference
+  cartas.forEach(c=>{
+    const nome=c.nome||''; if(!nome) return;
+    const texto=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao]
+      .filter(Boolean).join(' ').toUpperCase();
+    Object.values(kwMap).forEach(kw=>{
+      if((!kw._tipo||kw._tipo==='efeito')&&texto.includes(kw.name)&&!kw.cartas.includes(nome))
+        kw.cartas.push(nome);
+    });
+  });
+
   allKw=Object.values(kwMap).sort((a,b)=>a.name.localeCompare(b.name,'pt'));
 
   document.getElementById('loading').style.display='none';
