@@ -541,9 +541,16 @@ function levenshtein(a,b){
 function doImport(){
   const ta=document.getElementById('import-ta');
   if(ta) s.importText=ta.value;
+  // Normaliza sem espaços (para match exato)
   const normN=v=>(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+  // Normaliza mantendo espaços (para match por palavras)
+  const normWS=v=>(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
+
   const nameMap={},numMap={},nameById={};
   s.cards.forEach(c=>{ nameMap[normN(c.nome)]=c.id; numMap[normN(c.num)]=c.id; nameById[c.id]=c.nome; });
+  // Palavras de cada carta para match parcial
+  const cardWordsList=s.cards.map(c=>({id:c.id,nome:c.nome,words:normWS(c.nome).split(' ').filter(Boolean)}));
+
   const lines=(s.importText||'').split('\n');
   const acc={}; const missed=[]; const corrections=[]; let name='Baralho Importado';
   lines.forEach(line=>{
@@ -554,8 +561,26 @@ function doImport(){
     if(mm){ qty=parseInt(mm[1]); nm=mm[2]; }
     else{ mm=t.match(/^(.+?)\s*[x×]\s*(\d+)$/i); if(mm){ nm=mm[1]; qty=parseInt(mm[2]); } }
     nm=nm.trim();
+
+    // 1. Match exato normalizado
     let id=nameMap[normN(nm)]; if(id==null) id=numMap[normN(nm)];
-    // Correção automática por similaridade de nome
+
+    // 2. Match por palavras — todas as palavras do input aparecem no nome da carta
+    //    ex: "ana pimentel" → "Ana Pimentel de Mendonça", "arvore sagrada" → "Árvore Sagrada"
+    if(id==null){
+      const inputWs=normWS(nm).split(' ').filter(Boolean);
+      if(inputWs.length>=1){
+        const candidates=cardWordsList
+          .filter(({words})=>inputWs.every(w=>words.includes(w)))
+          .sort((a,b)=>a.words.length-b.words.length); // prefere nome mais curto (mais específico)
+        if(candidates.length){
+          id=candidates[0].id;
+          corrections.push({from:nm,to:candidates[0].nome});
+        }
+      }
+    }
+
+    // 3. Levenshtein — typos em nomes completos (ex: "Invasora Nocva" → "Invasora Nociva")
     if(id==null){
       const ni=normN(nm);
       if(ni.length>=3){
@@ -568,6 +593,7 @@ function doImport(){
         if(bestDist<=threshold){ id=bestId; corrections.push({from:nm,to:nameById[bestId]||bestKey}); }
       }
     }
+
     if(id==null){ missed.push(nm); return; }
     acc[id]=(acc[id]||0)+qty;
   });
