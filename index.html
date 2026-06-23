@@ -992,13 +992,17 @@ async function init(){
     return [...kws];
   }
 
-  // Mapa de IDs de expansão (wp post id → nome); adicionar novas coleções aqui
+  // Mapa de IDs de expansão (wp post id → nome)
   const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
 
   function getExpansaoNome(c){
+    // numero_id é global (1-60=DESCOBRIMENTO, 61+=EXPEDIÇÕES SECRETAS)
+    const nid=parseInt(c.numero_id)||0;
+    if(nid>=1&&nid<=60) return 'DESCOBRIMENTO';
+    if(nid>=61) return 'EXPEDIÇÕES SECRETAS';
+    // Fallback: expansao.id
     const e=c.expansao;
     if(!e) return '';
-    if(typeof e==='string') return e.trim();
     const o=Array.isArray(e)?e[0]:e;
     if(!o) return '';
     if(typeof o==='string') return o.trim();

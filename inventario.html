@@ -194,9 +194,11 @@ async function fetchCartas(){
 
 const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
 function getExpansaoNome(c){
+  const nid=parseInt(c.numero_id)||0;
+  if(nid>=1&&nid<=60) return 'DESCOBRIMENTO';
+  if(nid>=61) return 'EXPEDIÇÕES SECRETAS';
   const e=c.expansao;
   if(!e) return '';
-  if(typeof e==='string') return e.trim();
   const o=Array.isArray(e)?e[0]:e;
   if(!o) return '';
   if(typeof o==='string') return o.trim();
