@@ -961,10 +961,17 @@ async function init(){
     return;
   }
 
-  // Keywords: extraídas de effect_blocks (estruturado) + fallback em texto livre (lista fixa)
-  const KNOWN_KW=['ATRAIR','FRENESI','REGENERAR','IMOBILIZAR','INVESTIR','ATRAVESSAR',
-    'IGNORAR','FÚRIA','MUTÁVEL','PROTEGER','RESISTÊNCIA','VENENO MORTAL','ARRUINAR',
-    'INTIMIDAR','CURE','CURAR','ABSORVER CONHECIMENTO','REMOÇÃO DE ENCANTAMENTO','REMOÇÃO DE MAGIA'];
+  // Keywords: constrói a lista de keywords conhecidas dinamicamente a partir de todos os effect_reference
+  // de todas as cartas — quando uma keyword nova for adicionada no WordPress e atribuída a qualquer carta,
+  // ela automaticamente entra no set e passa a ser detectada no fallback de texto também.
+  const KNOWN_KW=new Set();
+  apiData.forEach(c=>{
+    (c.effect_blocks||[]).forEach(b=>{
+      (b.actions||[]).forEach(a=>{
+        (a.effect_reference||[]).forEach(r=>{ if(r.name) KNOWN_KW.add(r.name.toUpperCase()); });
+      });
+    });
+  });
   function extrairKeywords(c){
     const kws=new Set();
     (c.effect_blocks||[]).forEach(b=>{
