@@ -10,50 +10,93 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-:root{--bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;--line:#2c2f6b;--text:#ece3d0;--muted:#9698c4;--gold:#bea356;--red:#b14a3c}
+:root{--bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;--line:#2c2f6b;--text:#ece3d0;--muted:#9698c4;--gold:#bea356;--red:#b14a3c;--blue:#5fa8d3}
 body{background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans-serif;height:100vh;height:100dvh;display:flex;flex-direction:column}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2c2f6b;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
 button{cursor:pointer;font-family:inherit}
 
-#header{flex:none;display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid var(--line);background:#0e0f37}
+/* Header */
+#header{flex:none;display:flex;align-items:center;gap:10px;padding:11px 20px;border-bottom:1px solid var(--line);background:#0e0f37}
 #logo{display:flex;align-items:center;gap:11px;text-decoration:none}
 #logo-icon{width:38px;height:38px;object-fit:contain;flex:none}
 .logo-game{font-family:'Cinzel',serif;font-weight:700;font-size:15px;letter-spacing:.05em;color:#bea356}
 .logo-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text)}
-.btn-voltar{margin-left:auto;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 13px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+#btn-trocas{margin-left:auto;display:none;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--muted)}
+#btn-trocas.has-items{display:flex;color:var(--blue);border-color:var(--blue);background:rgba(95,168,211,.1)}
+#trade-badge{background:var(--blue);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700}
+.btn-voltar{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 13px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
 
-/* Progress bar */
-#summary{flex:none;background:var(--bg2);border-bottom:1px solid var(--line);padding:10px 20px;display:none;gap:16px;flex-wrap:wrap}
+/* Stats */
+#summary{flex:none;background:var(--bg2);border-bottom:1px solid var(--line);padding:14px 20px;display:none;flex-direction:column;gap:12px}
+.summary-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.col-stats-row{display:flex;flex-wrap:wrap;gap:14px}
 .col-progress{flex:1;min-width:200px}
-.cp-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
-.cp-name{font-family:'Cinzel',serif;font-size:12px;font-weight:600;color:var(--gold)}
-.cp-stat{font-size:11px;color:var(--muted)}
-.cp-bar{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
-.cp-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .3s}
+.cp-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.cp-name{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold)}
+.cp-pct{font-size:12px;font-weight:600;color:var(--text)}
+.cp-bar{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.cp-fill{height:100%;background:linear-gradient(90deg,#bea356,#d4b86a);border-radius:4px;transition:width .4s}
+.cp-nums{display:flex;gap:16px}
+.cp-n{font-size:11px;color:var(--muted)}
+.cp-n b{color:var(--text);font-weight:600}
 
 /* Tabs */
 #tabs{flex:none;display:none;background:var(--bg2);border-bottom:1px solid var(--line)}
-.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:600;padding:10px 18px;letter-spacing:.02em}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:600;padding:10px 18px}
 .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
 
-#page{flex:1;overflow-y:auto;padding:16px}
+/* Page */
+#page{flex:1;overflow-y:auto;padding:16px;transition:margin-right .25s}
 .col-section{margin-bottom:32px}
-.col-title{font-family:'Cinzel',serif;font-weight:700;font-size:18px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.col-title{font-family:'Cinzel',serif;font-weight:700;font-size:17px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
 .col-badge{font-size:11px;font-weight:600;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:2px 9px;color:var(--muted)}
+.col-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px;margin-bottom:8px}
 
-#inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+/* Card */
 .inv-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:border-color .15s}
 .inv-card.owned{border-color:rgba(190,163,86,.4)}
 .inv-card.foil{border-color:var(--gold);box-shadow:0 0 8px rgba(190,163,86,.2)}
-.inv-img{width:100%;height:182px;object-fit:cover;display:block;background:var(--bg3)}
-.inv-ph{width:100%;height:182px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;color:var(--muted);padding:8px;background:var(--bg3)}
+.inv-card.trade-on{outline:2px solid var(--blue);outline-offset:-2px}
+.inv-img-wrap{width:100%;height:180px;background:var(--bg3);overflow:hidden}
+.inv-img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .25s}
+.inv-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;color:var(--muted);padding:8px;transition:filter .25s}
+.inv-card:not(.owned) .inv-img,.inv-card:not(.owned) .inv-ph{filter:grayscale(100%) opacity(.45)}
 .inv-bottom{padding:6px 8px 8px}
 .inv-nome{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
 .qty-row{display:flex;gap:3px;margin-bottom:5px}
 .qty-btn{flex:1;border:1px solid var(--line);background:var(--bg3);color:var(--muted);border-radius:5px;font-size:11px;font-weight:700;padding:4px 0;transition:background .1s,color .1s}
 .qty-btn.sel{background:var(--gold);color:#1a130a;border-color:var(--gold)}
-.foil-btn{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--muted);border-radius:5px;font-size:11px;font-weight:700;padding:4px;letter-spacing:.04em;transition:background .1s,color .1s}
+.card-actions{display:flex;gap:3px}
+.foil-btn,.troca-btn{flex:1;border:1px solid var(--line);background:var(--bg3);color:var(--muted);border-radius:5px;font-size:10px;font-weight:700;padding:4px 2px;transition:background .1s,color .1s;white-space:nowrap}
 .foil-btn.sel{background:rgba(190,163,86,.15);color:var(--gold);border-color:var(--gold)}
+.troca-btn.sel{background:rgba(95,168,211,.15);color:var(--blue);border-color:var(--blue)}
+.troca-btn:disabled{opacity:.3;cursor:default}
+
+/* Trade side panel */
+#trade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:55}
+#trade-overlay.open{display:block}
+#trade-panel{position:fixed;top:0;right:0;bottom:0;width:300px;background:var(--bg2);border-left:1px solid var(--line);z-index:60;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s;box-shadow:-6px 0 24px rgba(0,0,0,.5)}
+#trade-panel.open{transform:translateX(0)}
+.tp-head{padding:16px 16px 12px;border-bottom:1px solid var(--line);flex:none;display:flex;align-items:center;justify-content:space-between}
+.tp-title{font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--blue)}
+.tp-close{background:none;border:none;color:var(--muted);font-size:22px;line-height:1;padding:2px 4px}
+.tp-close:hover{color:var(--text)}
+#trade-list{flex:1;overflow-y:auto;padding:12px}
+.trade-item{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--bg3);border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.ti-img{width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--bg);flex:none}
+.ti-info{flex:1;min-width:0}
+.ti-nome{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ti-col{font-size:10px;color:var(--muted);margin-top:2px}
+.ti-right{text-align:right;flex:none}
+.ti-qty{font-size:14px;font-weight:700;color:var(--blue)}
+.ti-lbl{font-size:9px;color:var(--muted)}
+.tp-empty{text-align:center;color:var(--muted);font-size:13px;padding:32px 12px;line-height:1.6}
+.tp-foot{padding:12px;border-top:1px solid var(--line);flex:none;display:flex;flex-direction:column;gap:7px}
+.tp-btn{width:100%;border-radius:8px;padding:8px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+.tp-btn-copy{background:var(--bg3);color:var(--text)}
+.tp-btn-copy:hover{border-color:var(--gold);color:var(--gold)}
+.tp-btn-clear{background:transparent;color:var(--muted)}
+.tp-btn-clear:hover{border-color:var(--red);color:var(--red)}
 
 /* Missing tab */
 #missing-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
@@ -64,16 +107,17 @@ button{cursor:pointer;font-family:inherit}
 
 #btn-reset{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;margin:20px 0}
 #btn-reset:hover{color:var(--red);border-color:var(--red)}
-
 #loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 0}
 
 @media(max-width:600px){
   #header{padding:9px 12px;gap:8px}
-  #summary{padding:8px 12px}
+  #summary{padding:10px 12px}
   #page{padding:10px}
-  #inv-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
-  .inv-img,.inv-ph{height:154px}
+  .col-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+  .inv-img-wrap{height:152px}
+  #trade-panel{width:100%;top:auto;height:72vh;transform:translateY(100%);border-radius:16px 16px 0 0;border-left:none;border-top:1px solid var(--line)}
+  #trade-panel.open{transform:translateY(0)}
 }
 </style>
 </head>
@@ -88,15 +132,14 @@ button{cursor:pointer;font-family:inherit}
       <div class="logo-sub">Ferramentas</div>
     </div>
   </a>
+  <button id="btn-trocas" onclick="toggleTradePanel()">⇄ Trocas <span id="trade-badge">0</span></button>
   <a href="./index.html" class="btn-voltar">← Ferramentas</a>
 </header>
 
 <div id="loading">Carregando catálogo…</div>
 
-<!-- Progress por coleção -->
 <div id="summary"></div>
 
-<!-- Tabs -->
 <div id="tabs">
   <button class="tab-btn active" onclick="setTab(0)">Coleções</button>
   <button class="tab-btn" onclick="setTab(1)">Faltando</button>
@@ -112,12 +155,24 @@ button{cursor:pointer;font-family:inherit}
   </div>
 </div>
 
+<div id="trade-overlay" onclick="toggleTradePanel()"></div>
+<div id="trade-panel">
+  <div class="tp-head">
+    <span class="tp-title">⇄ Para Troca</span>
+    <button class="tp-close" onclick="toggleTradePanel()">×</button>
+  </div>
+  <div id="trade-list"></div>
+  <div class="tp-foot">
+    <button class="tp-btn tp-btn-copy" onclick="copiarLista()">Copiar lista para compartilhar</button>
+    <button class="tp-btn tp-btn-clear" onclick="limparTrocas()">Limpar todas as trocas</button>
+  </div>
+</div>
+
 <script type="module">
 const CACHE_KEY='lb_api_v1';
 const INV_KEY='lb_inv_v1';
 const EXP_INFO={'DESCOBRIMENTO':{total:60,col:'01'},'EXPEDIÇÕES SECRETAS':{total:62,col:'02'}};
 const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Planta':'e'};
-const CAT_MAP={'Folclórica':'Folclóricos','Histórica':'Históricos','Apoio':'Apoios','Fera':'Feras','Planta':'Plantas'};
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function saveInv(){ try{ localStorage.setItem(INV_KEY,JSON.stringify(inv)); }catch(e){} }
@@ -142,8 +197,8 @@ function mapCard(c){
   const info=EXP_INFO[expName];
   const n=String(c.numero_id||0).padStart(3,'0');
   return{
-    id:c.wp_id, nome:c.nome||'', tipo:TIPO_MAP[c.tipo]||'b',
-    categoria:CAT_MAP[c.tipo]||c.tipo||'', raridade:c.raridade||'', colecao:expName,
+    id:c.wp_id, nome:c.nome||'',
+    tipo:TIPO_MAP[c.tipo]||'b', colecao:expName,
     numero_id:c.numero_id, num:info?`${n}/${info.total}-${info.col}`:n,
     imagem_url:c.imagem_url||'',
   };
@@ -151,94 +206,102 @@ function mapCard(c){
 
 let cards=[], cols=[], inv={}, curTab=0;
 
-function getInv(id){ return inv[id]||(inv[id]={qty:0,foil:false}); }
+function getInv(id){
+  if(!inv[id]) inv[id]={qty:0,foil:false,troca:false};
+  return inv[id];
+}
 
 function setQty(id,qty){
-  getInv(id).qty=qty;
+  const e=getInv(id);
+  e.qty=qty;
+  if(qty===0) e.troca=false;
   saveInv();
   renderSummary();
-  renderCard(id);
+  renderCardEl(id);
+  updateTradeBadge();
 }
 
 function toggleFoil(id){
-  const e=getInv(id);
-  e.foil=!e.foil;
-  saveInv();
-  renderCard(id);
+  const e=getInv(id); e.foil=!e.foil;
+  saveInv(); renderCardEl(id);
 }
 
-function renderCard(id){
+function toggleTroca(id){
+  const e=getInv(id);
+  if(e.qty===0) return;
+  e.troca=!e.troca;
+  saveInv();
+  renderCardEl(id);
+  updateTradeBadge();
+  if(document.getElementById('trade-panel').classList.contains('open')) renderTradePanel();
+}
+
+function renderCardEl(id){
   const el=document.getElementById('inv-'+id); if(!el) return;
-  const c=cards.find(x=>x.id===id); if(!c) return;
-  const {qty,foil}=getInv(id);
-  el.className='inv-card'+(qty>0?' owned':'')+(foil?' foil':'');
-  el.querySelector('.qty-row').innerHTML=[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${id},${n})">${n}</button>`).join('');
-  el.querySelector('.foil-btn').className='foil-btn'+(foil?' sel':'');
+  const {qty,foil,troca}=getInv(id);
+  el.className='inv-card'+(qty>0?' owned':'')+(foil?' foil':'')+(troca?' trade-on':'');
+  const qr=el.querySelector('.qty-row');
+  if(qr) qr.innerHTML=[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${id},${n})">${n}</button>`).join('');
+  const fb=el.querySelector('.foil-btn');
+  if(fb) fb.className='foil-btn'+(foil?' sel':'');
+  const tb=el.querySelector('.troca-btn');
+  if(tb){ tb.className='troca-btn'+(troca?' sel':''); tb.disabled=qty===0; }
 }
 
 function renderSummary(){
-  const summaryEl=document.getElementById('summary');
-  summaryEl.innerHTML=cols.map(col=>{
-    const colCards=cards.filter(c=>c.colecao===col);
-    const owned=colCards.filter(c=>getInv(c.id).qty>0).length;
-    const foils=colCards.filter(c=>getInv(c.id).foil).length;
-    const pct=colCards.length?Math.round(owned/colCards.length*100):0;
-    return `<div class="col-progress">
-      <div class="cp-header">
-        <span class="cp-name">${esc(col)}</span>
-        <span class="cp-stat">${owned}/${colCards.length} · ${foils} foil${foils!==1?'s':''} · ${pct}%</span>
-      </div>
-      <div class="cp-bar"><div class="cp-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('');
+  const el=document.getElementById('summary');
+  el.innerHTML=`<div class="summary-label">Progresso da Coleção</div><div class="col-stats-row">`
+    +cols.map(col=>{
+      const colCards=cards.filter(c=>c.colecao===col);
+      const owned=colCards.filter(c=>getInv(c.id).qty>0).length;
+      const foils=colCards.filter(c=>getInv(c.id).foil).length;
+      const missing=colCards.length-owned;
+      const pct=colCards.length?Math.round(owned/colCards.length*100):0;
+      return `<div class="col-progress">
+        <div class="cp-header">
+          <span class="cp-name">${esc(col)}</span>
+          <span class="cp-pct">${pct}%</span>
+        </div>
+        <div class="cp-bar"><div class="cp-fill" style="width:${pct}%"></div></div>
+        <div class="cp-nums">
+          <span class="cp-n"><b>${owned}</b> possuídas</span>
+          <span class="cp-n"><b>${missing}</b> faltando</span>
+          ${foils?`<span class="cp-n"><b>${foils}</b> foil</span>`:''}
+        </div>
+      </div>`;
+    }).join('')+'</div>';
 }
 
 function renderGrid(){
-  document.getElementById('inv-grid').innerHTML=cols.map(col=>{
-    const colCards=cards.filter(c=>c.colecao===col);
-    return `<div class="col-section">
-      <div class="col-title">${esc(col)}<span class="col-badge">${colCards.length} cartas</span></div>
-      ${colCards.map(c=>{
-        const {qty,foil}=getInv(c.id);
-        return `<div class="inv-card${qty>0?' owned':''}${foil?' foil':''}" id="inv-${c.id}">
-          ${c.imagem_url
-            ?`<img class="inv-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" loading="lazy" referrerpolicy="no-referrer">`
-            :`<div class="inv-ph">${esc(c.nome)}<br><span style="font-size:9px">Nº ${esc(c.num)}</span></div>`}
-          <div class="inv-bottom">
-            <div class="inv-nome" title="${esc(c.nome)}">${esc(c.nome)}</div>
-            <div class="qty-row">
-              ${[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${c.id},${n})">${n}</button>`).join('')}
-            </div>
-            <button class="foil-btn${foil?' sel':''}" onclick="toggleFoil(${c.id})">✦ Foil</button>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`;
-  }).join('');
-
-  // Wrap card grid inside col-sections
-  const colSections=document.querySelectorAll('.col-section');
   const gridEl=document.getElementById('inv-grid');
   gridEl.innerHTML='';
   cols.forEach(col=>{
     const colCards=cards.filter(c=>c.colecao===col);
     const sec=document.createElement('div');
     sec.className='col-section';
-    sec.innerHTML=`<div class="col-title">${esc(col)}<span class="col-badge">${colCards.length} cartas</span></div>`;
+    const hdr=document.createElement('div');
+    hdr.className='col-title';
+    hdr.innerHTML=`${esc(col)}<span class="col-badge">${colCards.length} cartas</span>`;
+    sec.appendChild(hdr);
     const grid=document.createElement('div');
-    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:24px';
+    grid.className='col-grid';
     colCards.forEach(c=>{
-      const {qty,foil}=getInv(c.id);
+      const {qty,foil,troca}=getInv(c.id);
       const div=document.createElement('div');
       div.id='inv-'+c.id;
-      div.className='inv-card'+(qty>0?' owned':'')+(foil?' foil':'');
-      div.innerHTML=`${c.imagem_url
-        ?`<img class="inv-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" loading="lazy" referrerpolicy="no-referrer">`
-        :`<div class="inv-ph">${esc(c.nome)}<br><span style="font-size:9px">Nº ${esc(c.num)}</span></div>`}
+      div.className='inv-card'+(qty>0?' owned':'')+(foil?' foil':'')+(troca?' trade-on':'');
+      div.innerHTML=`
+        <div class="inv-img-wrap">${c.imagem_url
+          ?`<img class="inv-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" loading="lazy" referrerpolicy="no-referrer">`
+          :`<div class="inv-ph">${esc(c.nome)}<br><span style="font-size:9px">Nº ${esc(c.num)}</span></div>`
+        }</div>
         <div class="inv-bottom">
           <div class="inv-nome" title="${esc(c.nome)}">${esc(c.nome)}</div>
           <div class="qty-row">${[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${c.id},${n})">${n}</button>`).join('')}</div>
-          <button class="foil-btn${foil?' sel':''}" onclick="toggleFoil(${c.id})">✦ Foil</button>
+          <div class="card-actions">
+            <button class="foil-btn${foil?' sel':''}" onclick="toggleFoil(${c.id})">✦ Foil</button>
+            <button class="troca-btn${troca?' sel':''}" onclick="toggleTroca(${c.id})"${qty===0?' disabled':''}>⇄ Troca</button>
+          </div>
         </div>`;
       grid.appendChild(div);
     });
@@ -251,16 +314,71 @@ function renderMissing(){
   const missing=cards.filter(c=>getInv(c.id).qty===0);
   document.getElementById('missing-list').innerHTML=missing.length
     ?missing.map(c=>`<div class="miss-item">
-        <div>
-          <div class="miss-num">${esc(c.num)}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:1px">${esc(c.raridade)}</div>
-        </div>
-        <div>
-          <div class="miss-nome">${esc(c.nome)}</div>
-          <div class="miss-col">${esc(c.colecao)}</div>
-        </div>
+        <div><div class="miss-num">${esc(c.num)}</div></div>
+        <div><div class="miss-nome">${esc(c.nome)}</div><div class="miss-col">${esc(c.colecao)}</div></div>
       </div>`).join('')
-    :'<div class="empty">🎉 Coleção completa! Você tem todas as cartas.</div>';
+    :'<div class="empty">Coleção completa! Você tem todas as cartas.</div>';
+}
+
+function renderTradePanel(){
+  const tradeCards=cards.filter(c=>getInv(c.id).troca);
+  document.getElementById('trade-list').innerHTML=tradeCards.length
+    ?tradeCards.map(c=>{
+        const {qty}=getInv(c.id);
+        return `<div class="trade-item">
+          ${c.imagem_url
+            ?`<img class="ti-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" referrerpolicy="no-referrer">`
+            :`<div class="ti-img" style="display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted);text-align:center;padding:4px">${esc(c.nome)}</div>`}
+          <div class="ti-info">
+            <div class="ti-nome">${esc(c.nome)}</div>
+            <div class="ti-col">${esc(c.colecao)}</div>
+          </div>
+          <div class="ti-right">
+            <div class="ti-qty">${qty}×</div>
+            <div class="ti-lbl">cópia${qty!==1?'s':''}</div>
+          </div>
+        </div>`;
+      }).join('')
+    :'<div class="tp-empty">Nenhuma carta marcada para troca.<br><small>Use o botão ⇄ nas cartas que você possui.</small></div>';
+}
+
+function updateTradeBadge(){
+  const n=cards.filter(c=>getInv(c.id).troca).length;
+  document.getElementById('trade-badge').textContent=n;
+  const btn=document.getElementById('btn-trocas');
+  btn.classList.toggle('has-items',n>0);
+  if(n===0){
+    document.getElementById('trade-panel').classList.remove('open');
+    document.getElementById('trade-overlay').classList.remove('open');
+  }
+}
+
+function toggleTradePanel(){
+  const panel=document.getElementById('trade-panel');
+  const overlay=document.getElementById('trade-overlay');
+  const isOpen=panel.classList.toggle('open');
+  overlay.classList.toggle('open',isOpen);
+  if(isOpen) renderTradePanel();
+}
+
+function copiarLista(){
+  const tradeCards=cards.filter(c=>getInv(c.id).troca);
+  if(!tradeCards.length) return;
+  const txt='Cartas para troca — Lendas & Batalhas\n\n'
+    +tradeCards.map(c=>`• ${c.nome} (${c.colecao}) — ${getInv(c.id).qty} cópia${getInv(c.id).qty!==1?'s':''}`).join('\n');
+  navigator.clipboard.writeText(txt)
+    .then(()=>alert('Lista copiada para a área de transferência!'))
+    .catch(()=>prompt('Copie a lista abaixo:',txt));
+}
+
+function limparTrocas(){
+  if(!confirm('Limpar todas as marcações de troca?')) return;
+  cards.forEach(c=>{ if(inv[c.id]) inv[c.id].troca=false; });
+  saveInv();
+  updateTradeBadge();
+  renderGrid();
+  document.getElementById('trade-panel').classList.remove('open');
+  document.getElementById('trade-overlay').classList.remove('open');
 }
 
 function setTab(n){
@@ -277,9 +395,12 @@ function resetar(){
   saveInv();
   renderSummary();
   renderGrid();
+  updateTradeBadge();
 }
 
-window.setQty=setQty; window.toggleFoil=toggleFoil; window.setTab=setTab; window.resetar=resetar;
+window.setQty=setQty; window.toggleFoil=toggleFoil; window.toggleTroca=toggleTroca;
+window.setTab=setTab; window.resetar=resetar;
+window.toggleTradePanel=toggleTradePanel; window.copiarLista=copiarLista; window.limparTrocas=limparTrocas;
 
 async function init(){
   let apiData;
@@ -296,7 +417,6 @@ async function init(){
   cols=[];
   cards.forEach(c=>{ if(c.colecao&&!seen.has(c.colecao)){seen.add(c.colecao);cols.push(c.colecao);} });
 
-  // Load saved inventory
   try{ const saved=localStorage.getItem(INV_KEY); if(saved) inv=JSON.parse(saved); }catch(e){}
 
   document.getElementById('loading').style.display='none';
@@ -306,6 +426,7 @@ async function init(){
 
   renderSummary();
   renderGrid();
+  updateTradeBadge();
 }
 
 init();

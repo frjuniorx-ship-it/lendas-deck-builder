@@ -117,12 +117,12 @@ select.fil:focus{border-color:var(--gold)}
 
 <script type="module">
 const CACHE_KEY='lb_api_v1';
-const RARC={Comum:'#c79a48',Raro:'#4caf50','Super raro':'#5f8fb0','Ultra raro':'#8a72b8',Lendário:'#9b9384'};
+const RARC={Comum:'#aaaaaa',Raro:'#5fa8d3','Super raro':'#9468c4','Ultra raro':'#c9863c',Lendário:'#4caf50'};
+const RAR_ORDER=['Comum','Raro','Super raro','Ultra raro','Lendário'];
 const EXP_INFO={'DESCOBRIMENTO':{total:60,col:'01'},'EXPEDIÇÕES SECRETAS':{total:62,col:'02'}};
 const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Planta':'e'};
 const CAT_MAP={'Folclórica':'Folclóricos','Histórica':'Históricos','Apoio':'Apoios','Fera':'Feras','Planta':'Plantas'};
 const CATS=['Folclóricos','Históricos','Apoios','Feras','Plantas'];
-const RARS=['Comum','Raro','Super raro','Ultra raro','Lendário'];
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -189,9 +189,11 @@ async function init(){
   const allCls=[...new Set(cards.flatMap(c=>c.classes))].filter(Boolean).sort();
 
   const sel=(id,opts)=>{ const s=document.getElementById(id); opts.forEach(o=>{ const el=document.createElement('option'); el.value=o; el.textContent=o; s.appendChild(el); }); };
+  const allRars=[...new Set(cards.map(c=>c.raridade).filter(Boolean))];
+  allRars.sort((a,b)=>(RAR_ORDER.indexOf(a)<0?99:RAR_ORDER.indexOf(a))-(RAR_ORDER.indexOf(b)<0?99:RAR_ORDER.indexOf(b)));
   sel('fil-col',cols);
   sel('fil-cat',CATS);
-  sel('fil-rar',RARS);
+  sel('fil-rar',allRars);
   sel('fil-pc',['1','2','3','4','5','6','7','8','9','10','--']);
   sel('fil-kw',allKws);
   sel('fil-cls',allCls);
