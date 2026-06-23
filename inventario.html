@@ -193,7 +193,8 @@ async function fetchCartas(){
 }
 
 function mapCard(c){
-  const expName=(c.expansao?.nome||'').toUpperCase();
+  const expRaw=typeof c.expansao==='string'?c.expansao:(c.expansao?.nome||c.expansao?.name||c.expansao?.post_title||c.expansao?.title||'');
+  const expName=expRaw.toUpperCase().trim();
   const info=EXP_INFO[expName];
   const n=String(c.numero_id||0).padStart(3,'0');
   return{

@@ -45,6 +45,9 @@ button{cursor:pointer;font-family:inherit}
 .kw-tipo-efeito{background:rgba(190,163,86,.15);color:var(--gold);border:1px solid rgba(190,163,86,.3)}
 .kw-tipo-termo{background:rgba(150,152,196,.12);color:var(--muted);border:1px solid rgba(150,152,196,.25)}
 
+#tabs{flex:none;background:var(--bg2);border-bottom:1px solid var(--line);display:none}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:600;padding:10px 20px;cursor:pointer;font-family:inherit}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
 #loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 0}
 
@@ -72,10 +75,15 @@ button{cursor:pointer;font-family:inherit}
 
 <div id="loading">Carregando glossário…</div>
 
+<div id="tabs">
+  <button class="tab-btn active" onclick="setTab('efeitos')">Efeitos</button>
+  <button class="tab-btn" onclick="setTab('termos')">Termos</button>
+</div>
+
 <div id="page" style="display:none">
   <div class="inner">
     <div class="page-title">Glossário</div>
-    <div class="page-sub">Todas as keywords do jogo e seus significados.</div>
+    <div class="page-sub" id="page-sub">Keywords de efeito do jogo e seus significados.</div>
     <div id="search-bar">
       <input id="search-in" placeholder="Buscar keyword…" oninput="filtrar()">
       <span id="kw-count"></span>
@@ -139,7 +147,7 @@ async function fetchGlossario(){
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-let allKw=[];
+let allKw=[], curTab='efeitos';
 
 async function init(){
   let cartas, glossData;
@@ -188,14 +196,27 @@ async function init(){
   allKw=Object.values(kwMap).sort((a,b)=>a.name.localeCompare(b.name,'pt'));
 
   document.getElementById('loading').style.display='none';
+  document.getElementById('tabs').style.display='';
   document.getElementById('page').style.display='';
   filtrar();
 }
 
+function setTab(tab){
+  curTab=tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['efeitos','termos'][i]===tab));
+  document.getElementById('page-sub').textContent=tab==='efeitos'
+    ?'Keywords de efeito do jogo e seus significados.'
+    :'Termos e mecânicas gerais do jogo.';
+  filtrar();
+}
+window.setTab=setTab;
+
 function filtrar(){
   const q=(document.getElementById('search-in').value||'').toLowerCase().trim();
-  const vis=q?allKw.filter(k=>k.name.toLowerCase().includes(q)||k.descricao.toLowerCase().includes(q)):allKw;
-  document.getElementById('kw-count').textContent=vis.length+' keywords';
+  let vis=q?allKw.filter(k=>k.name.toLowerCase().includes(q)||k.descricao.toLowerCase().includes(q)):allKw;
+  if(curTab==='efeitos') vis=vis.filter(k=>!k._tipo||k._tipo==='efeito');
+  if(curTab==='termos')  vis=vis.filter(k=>k._tipo==='termo');
+  document.getElementById('kw-count').textContent=vis.length+' itens';
   document.getElementById('kw-grid').innerHTML=vis.length
     ? vis.map(k=>`
       <div class="kw-card">

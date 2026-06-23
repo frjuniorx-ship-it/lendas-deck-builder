@@ -152,7 +152,8 @@ function extrairKw(c, KNOWN_KW){
 function mapCard(c, KNOWN_KW){
   const isFolc=c.tipo==='Folclórica';
   const pc=isFolc?c.numero_descarte:c.pontos_conhecimento;
-  const expName=(c.expansao?.nome||'').toUpperCase();
+  const expRaw=typeof c.expansao==='string'?c.expansao:(c.expansao?.nome||c.expansao?.name||c.expansao?.post_title||c.expansao?.title||'');
+  const expName=expRaw.toUpperCase().trim();
   const info=EXP_INFO[expName];
   const n=String(c.numero_id||0).padStart(3,'0');
   const efeito=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' ');

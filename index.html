@@ -397,8 +397,8 @@ import { CARDS, SEED_DECKS } from './project/lb-data.js';
 // ── Constants ────────────────────────────────────────────────────────────────
 const CATS  = ['Folclóricos','Históricos','Apoios','Feras','Plantas'];
 const CATC  = {Folclóricos:'#00a2ff',Históricos:'#c2503f',Apoios:'#c79a48',Feras:'#2a2929',Plantas:'#5aa06f'};
-const RARS  = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
-const RARC  = {Comum:'#c79a48',Raro:'#4caf50','Super raro':'#5f8fb0','Ultra raro':'#8a72b8',Lendário:'#9b9384'};
+let   RARS  = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
+const RARC  = {Comum:'#aaaaaa',Raro:'#5fa8d3','Super raro':'#9468c4','Ultra raro':'#c9863c',Lendário:'#4caf50'};
 const NC_NAMES = new Set(['Pindorama','Terra de Vera Cruz']); // limite de cópias = valor do campo pc
 let COLS  = []; // derivado da API (novas coleções aparecem automaticamente)
 const MIN=40, MAX=80, KEY='lb_decks_v2';
@@ -996,7 +996,8 @@ async function init(){
   const cards=apiData.map(c=>{
     const isFolc=c.tipo==='Folclórica';
     const pc=isFolc?c.numero_descarte:c.pontos_conhecimento;
-    const expName=(c.expansao?.nome||'').toUpperCase();
+    const expRaw=typeof c.expansao==='string'?c.expansao:(c.expansao?.nome||c.expansao?.name||c.expansao?.post_title||c.expansao?.title||'');
+    const expName=expRaw.toUpperCase().trim();
     const info=EXP_INFO[expName];
     const n=String(c.numero_id||0).padStart(3,'0');
     // efeito = texto descritivo completo (para busca e detecção de regras como cópias ilimitadas)
@@ -1025,10 +1026,14 @@ async function init(){
   const byId={};
   cards.forEach(c=>byId[c.id]=c);
 
-  // 3. Deriva coleções disponíveis (novas coleções aparecem automaticamente)
+  // 3. Deriva coleções e raridades disponíveis (atualizam automaticamente com novas cartas)
   const seen=new Set();
   COLS.length=0;
   cards.forEach(c=>{ if(c.colecao&&!seen.has(c.colecao)){seen.add(c.colecao);COLS.push(c.colecao);} });
+  const rarOrder=['Comum','Raro','Super raro','Ultra raro','Lendário'];
+  const apiRars=[...new Set(cards.map(c=>c.raridade).filter(Boolean))];
+  apiRars.sort((a,b)=>(rarOrder.indexOf(a)<0?99:rarOrder.indexOf(a))-(rarOrder.indexOf(b)<0?99:rarOrder.indexOf(b)));
+  RARS.length=0; RARS.push(...(apiRars.length?apiRars:['Comum','Raro','Super raro','Ultra raro','Lendário']));
 
   // 4. Mapa nome-normalizado → wp_id (para migração e import)
   const normToId={};
