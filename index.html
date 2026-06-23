@@ -993,14 +993,13 @@ async function init(){
   }
 
   // Mapa de IDs de expansão (wp post id → nome)
-  const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
+  const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS'};
+
+  // Debug: lista todos os IDs de expansão únicos encontrados
+  const expIds=[...new Map(apiData.map(c=>[c.expansao?.id,c.expansao])).entries()];
+  console.warn('LB EXPANSOES (id→obj):', expIds);
 
   function getExpansaoNome(c){
-    // numero_id é global (1-60=DESCOBRIMENTO, 61+=EXPEDIÇÕES SECRETAS)
-    const nid=parseInt(c.numero_id)||0;
-    if(nid>=1&&nid<=60) return 'DESCOBRIMENTO';
-    if(nid>=61) return 'EXPEDIÇÕES SECRETAS';
-    // Fallback: expansao.id
     const e=c.expansao;
     if(!e) return '';
     const o=Array.isArray(e)?e[0]:e;
@@ -1009,7 +1008,7 @@ async function init(){
     const nome=o.nome||o.name||o.post_title||o.title?.rendered||o.title||'';
     if(nome.trim()) return nome.trim();
     const id=o.id||o.ID;
-    return id?(EXP_ID_MAP[id]||'COLEÇÃO '+id):'';
+    return id?(EXP_ID_MAP[id]||'ID_'+id):'';
   }
 
   // 2. Mapeia campos da API para o formato interno

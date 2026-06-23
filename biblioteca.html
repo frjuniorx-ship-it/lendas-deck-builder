@@ -149,11 +149,8 @@ function extrairKw(c, KNOWN_KW){
   return [...kws];
 }
 
-const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
+const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS'};
 function getExpansaoNome(c){
-  const nid=parseInt(c.numero_id)||0;
-  if(nid>=1&&nid<=60) return 'DESCOBRIMENTO';
-  if(nid>=61) return 'EXPEDIÇÕES SECRETAS';
   const e=c.expansao;
   if(!e) return '';
   const o=Array.isArray(e)?e[0]:e;
@@ -162,7 +159,7 @@ function getExpansaoNome(c){
   const nome=o.nome||o.name||o.post_title||o.title?.rendered||o.title||'';
   if(nome.trim()) return nome.trim();
   const id=o.id||o.ID;
-  return id?(EXP_ID_MAP[id]||'COLEÇÃO '+id):'';
+  return id?(EXP_ID_MAP[id]||'ID_'+id):'';
 }
 
 function mapCard(c, KNOWN_KW){
