@@ -440,6 +440,7 @@ let s = {
   decks: [],
   editingIdx: -1,
   deletingIdx: -1,
+  pendingDeckIdx: -1,
   search: '',
   fCat: 'Todas', fRar: 'Todas', fCol: 'Todas', fPc: 'Todas',
   modal: null,    // null | 'export' | 'import' | 'confirm-delete'
@@ -527,24 +528,46 @@ function exportText(d){
   return out.join('\n').trim();
 }
 
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  if(!m) return n; if(!n) return m;
+  const dp=Array.from({length:m+1},(_,i)=>[i]);
+  for(let j=1;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
 function doImport(){
-  // Lê direto do DOM — sem oninput para não re-renderizar a cada tecla
   const ta=document.getElementById('import-ta');
   if(ta) s.importText=ta.value;
-  const normN=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
-  const nameMap={}, numMap={};
-  s.cards.forEach(c=>{ nameMap[normN(c.nome)]=c.id; numMap[normN(c.num)]=c.id; });
+  const normN=v=>(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+  const nameMap={},numMap={},nameById={};
+  s.cards.forEach(c=>{ nameMap[normN(c.nome)]=c.id; numMap[normN(c.num)]=c.id; nameById[c.id]=c.nome; });
   const lines=(s.importText||'').split('\n');
-  const acc={}; let missed=[]; let name='Baralho Importado';
+  const acc={}; const missed=[]; const corrections=[]; let name='Baralho Importado';
   lines.forEach(line=>{
     let t=line.trim(); if(!t) return;
     if(t[0]==='#'){ const m=t.replace(/^#+\s*/,'').replace(/—.*$/,'').trim(); if(m&&!/^\d/.test(m)) name=m; return; }
-    let qty=1, nm=t;
+    let qty=1,nm=t;
     let mm=t.match(/^(\d+)\s*[x×]?\s+(.+)$/i);
     if(mm){ qty=parseInt(mm[1]); nm=mm[2]; }
     else{ mm=t.match(/^(.+?)\s*[x×]\s*(\d+)$/i); if(mm){ nm=mm[1]; qty=parseInt(mm[2]); } }
     nm=nm.trim();
     let id=nameMap[normN(nm)]; if(id==null) id=numMap[normN(nm)];
+    // Correção automática por similaridade de nome
+    if(id==null){
+      const ni=normN(nm);
+      if(ni.length>=3){
+        let bestDist=Infinity,bestKey='',bestId=null;
+        Object.entries(nameMap).forEach(([key,cid])=>{
+          const d=levenshtein(ni,key);
+          if(d<bestDist){ bestDist=d; bestKey=key; bestId=cid; }
+        });
+        const threshold=Math.max(2,Math.floor(Math.max(ni.length,bestKey.length)*0.35));
+        if(bestDist<=threshold){ id=bestId; corrections.push({from:nm,to:nameById[bestId]||bestKey}); }
+      }
+    }
     if(id==null){ missed.push(nm); return; }
     acc[id]=(acc[id]||0)+qty;
   });
@@ -553,8 +576,21 @@ function doImport(){
   const decks=s.decks.slice();
   decks.push({nome:name,fav:false,isExample:false,cards});
   persist(decks);
-  if(missed.length) console.warn('Cartas não reconhecidas:',missed);
-  setState({decks,modal:null,view:'builder',editingIdx:decks.length-1,tab:'deck',importText:'',importMsg:null});
+  const newIdx=decks.length-1;
+  if(!corrections.length&&!missed.length){
+    setState({decks,modal:null,view:'builder',editingIdx:newIdx,tab:'deck',importText:'',importMsg:null,pendingDeckIdx:-1});
+  } else {
+    const ls=[`${cards.length} carta${cards.length!==1?'s':''} importada${cards.length!==1?'s':''}.`];
+    if(corrections.length){
+      ls.push(`\n${corrections.length} nome${corrections.length!==1?'s corrigidos':' corrigido'} automaticamente:`);
+      corrections.forEach(c=>ls.push(`  • "${c.from}"  →  "${c.to}"`));
+    }
+    if(missed.length){
+      ls.push(`\n${missed.length} não encontrada${missed.length!==1?'s':''}:`);
+      missed.forEach(m=>ls.push(`  • "${m}"`));
+    }
+    setState({decks,pendingDeckIdx:newIdx,importMsg:{ok:true,text:ls.join('\n')},importText:''});
+  }
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
@@ -874,13 +910,17 @@ function renderModal(){
 
   if(s.modal==='import'){
     title.textContent='Importar lista';
+    const hasPending=s.pendingDeckIdx>=0;
     body.innerHTML=`
-      <p class="mdesc">Cole uma lista no formato <b style="color:var(--text)">3x Boitatá</b> (uma por linha). Um novo baralho será criado.</p>
-      <textarea class="mta" id="import-ta" placeholder="3x Boitatá\n2x Vitória-régia\n1x D. João III">${esc(s.importText)}</textarea>
-      ${s.importMsg?`<div id="import-msg" style="color:${s.importMsg.ok?'#6fa8dc':'#d98a7e'}">${esc(s.importMsg.text)}</div>`:''}
+      <p class="mdesc">Cole uma lista no formato <b style="color:var(--text)">3x Boitatá</b> (uma por linha). Erros de digitação nos nomes são corrigidos automaticamente.</p>
+      ${!hasPending?`<textarea class="mta" id="import-ta" placeholder="3x Boitatá\n2x Vitória-régia\n1x D. João III">${esc(s.importText)}</textarea>`:''}
+      ${s.importMsg?`<div id="import-msg" style="color:${s.importMsg.ok?'#6fa8dc':'#d98a7e'};white-space:pre-line;font-size:12px;margin-top:9px;line-height:1.7">${esc(s.importMsg.text)}</div>`:''}
       <div class="mactions">
-        <button class="btn-cancel" onclick="app.closeModal()">Cancelar</button>
-        <button class="btn-primary" onclick="app.doImport()">Importar</button>
+        <button class="btn-cancel" onclick="app.closeModal()">${hasPending?'Fechar':'Cancelar'}</button>
+        ${hasPending
+          ?`<button class="btn-primary" onclick="app.goToDeck()">Ver baralho →</button>`
+          :`<button class="btn-primary" onclick="app.doImport()">Importar</button>`
+        }
       </div>`;
     return;
   }
@@ -972,8 +1012,12 @@ window.app = {
   closeZoom(){ document.getElementById('zoom-modal').classList.remove('open'); },
 
   openExport(){ setState({modal:'export',copied:false}); },
-  openImport(){ setState({modal:'import',importText:'',importMsg:null}); },
-  closeModal(){ setState({modal:null,copied:false}); },
+  openImport(){ setState({modal:'import',importText:'',importMsg:null,pendingDeckIdx:-1}); },
+  closeModal(){ setState({modal:null,copied:false,pendingDeckIdx:-1,importMsg:null}); },
+  goToDeck(){
+    const idx=s.pendingDeckIdx; if(idx<0) return;
+    setState({modal:null,view:'builder',editingIdx:idx,tab:'deck',importText:'',importMsg:null,pendingDeckIdx:-1});
+  },
 
   setImportText(v){ s.importText=v; },
 
