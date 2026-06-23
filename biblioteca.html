@@ -149,14 +149,18 @@ function extrairKw(c, KNOWN_KW){
   return [...kws];
 }
 
+const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
 function getExpansaoNome(c){
   const e=c.expansao;
-  if(!e) return c.colecao||c.collection||c.expansion||c.serie||c.set_name||'';
+  if(!e) return '';
   if(typeof e==='string') return e.trim();
-  const arr=Array.isArray(e)?e[0]:e;
-  if(!arr) return '';
-  if(typeof arr==='string') return arr.trim();
-  return arr.nome||arr.name||arr.post_title||arr.title?.rendered||arr.title||'';
+  const o=Array.isArray(e)?e[0]:e;
+  if(!o) return '';
+  if(typeof o==='string') return o.trim();
+  const nome=o.nome||o.name||o.post_title||o.title?.rendered||o.title||'';
+  if(nome.trim()) return nome.trim();
+  const id=o.id||o.ID;
+  return id?(EXP_ID_MAP[id]||'COLEÇÃO '+id):'';
 }
 
 function mapCard(c, KNOWN_KW){
