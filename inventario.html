@@ -28,16 +28,19 @@ button{cursor:pointer;font-family:inherit}
 /* Stats */
 #summary{flex:none;background:var(--bg2);border-bottom:1px solid var(--line);padding:14px 20px;display:none;flex-direction:column;gap:12px}
 .summary-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
-.col-stats-row{display:flex;flex-wrap:wrap;gap:14px}
-.col-progress{flex:1;min-width:200px}
 .cp-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
-.cp-name{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold)}
-.cp-pct{font-size:12px;font-weight:600;color:var(--text)}
+.cp-name{font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--gold)}
+.cp-pct{font-size:14px;font-weight:700;color:var(--text)}
 .cp-bar{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:6px}
 .cp-fill{height:100%;background:linear-gradient(90deg,#bea356,#d4b86a);border-radius:4px;transition:width .4s}
 .cp-nums{display:flex;gap:16px;flex-wrap:wrap}
 .cp-n{font-size:11px;color:var(--muted)}
 .cp-n b{color:var(--text);font-weight:600}
+/* Per-collection inline progress */
+.cpi-wrap{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.cpi-bar{width:72px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;flex:none}
+.cpi-fill{height:100%;background:linear-gradient(90deg,#bea356,#d4b86a);border-radius:3px;transition:width .3s}
+.cpi-text{font-size:11px;color:var(--muted);white-space:nowrap}
 
 /* Tabs */
 #tabs{flex:none;display:none;background:var(--bg2);border-bottom:1px solid var(--line)}
@@ -236,7 +239,7 @@ function changeQty(id, delta){
   if(e.foil>e.qty) e.foil=e.qty;
   if(e.troca>e.qty) e.troca=e.qty;
   if(e.qty===0){ e.foil=0; e.troca=0; }
-  saveInv(); renderSummary(); renderCardEl(id); updateTradeBadge();
+  saveInv(); renderSummary(); renderAllColStats(); renderCardEl(id); updateTradeBadge();
   if(document.getElementById('trade-panel').classList.contains('open')) renderTradePanel();
 }
 
@@ -289,35 +292,51 @@ function renderTradeItem(id){
 
 function renderSummary(){
   const el=document.getElementById('summary');
-  el.innerHTML=`<div class="summary-label">Progresso da Coleção</div><div class="col-stats-row">`
-    +cols.map(col=>{
-      const colCards=cards.filter(c=>c.colecao===col);
-      const owned=colCards.filter(c=>getInv(c.id).qty>0).length;
-      const foils=colCards.reduce((s,c)=>s+getInv(c.id).foil,0);
-      const missing=colCards.length-owned;
-      const pct=colCards.length?Math.round(owned/colCards.length*100):0;
-      return `<div class="col-progress">
-        <div class="cp-header"><span class="cp-name">${esc(col)}</span><span class="cp-pct">${pct}%</span></div>
-        <div class="cp-bar"><div class="cp-fill" style="width:${pct}%"></div></div>
-        <div class="cp-nums">
-          <span class="cp-n"><b>${owned}</b> possuídas</span>
-          <span class="cp-n"><b>${missing}</b> faltando</span>
-          ${foils?`<span class="cp-n"><b>${foils}</b> foil</span>`:''}
-        </div>
-      </div>`;
-    }).join('')+'</div>';
+  const total=cards.length;
+  const owned=cards.filter(c=>getInv(c.id).qty>0).length;
+  const foils=cards.reduce((s,c)=>s+getInv(c.id).foil,0);
+  const missing=total-owned;
+  const pct=total?Math.round(owned/total*100):0;
+  const nCols=cols.length;
+  el.innerHTML=`
+    <div class="summary-label">Progresso Geral — ${nCols} coleção${nCols!==1?'ões':''}</div>
+    <div class="cp-header"><span class="cp-name">Todas as Coleções</span><span class="cp-pct">${pct}%</span></div>
+    <div class="cp-bar"><div class="cp-fill" style="width:${pct}%"></div></div>
+    <div class="cp-nums">
+      <span class="cp-n"><b>${owned}</b> possuídas</span>
+      <span class="cp-n"><b>${missing}</b> faltando</span>
+      <span class="cp-n"><b>${total}</b> no total</span>
+      ${foils?`<span class="cp-n"><b>${foils}</b> foil</span>`:''}
+    </div>`;
+}
+
+function renderAllColStats(){
+  cols.forEach((col,i)=>{
+    const el=document.getElementById('cs-'+i); if(!el) return;
+    const colCards=cards.filter(c=>c.colecao===col);
+    const owned=colCards.filter(c=>getInv(c.id).qty>0).length;
+    const pct=colCards.length?Math.round(owned/colCards.length*100):0;
+    el.querySelector('.cpi-fill').style.width=pct+'%';
+    el.querySelector('.cpi-text').textContent=`${owned}/${colCards.length} · ${pct}%`;
+  });
 }
 
 function renderGrid(){
   const gridEl=document.getElementById('inv-grid');
   gridEl.innerHTML='';
-  cols.forEach(col=>{
+  cols.forEach((col,colIdx)=>{
     const colCards=cards.filter(c=>c.colecao===col);
+    const ownedCol=colCards.filter(c=>getInv(c.id).qty>0).length;
+    const pctCol=colCards.length?Math.round(ownedCol/colCards.length*100):0;
     const sec=document.createElement('div');
     sec.className='col-section';
     const hdr=document.createElement('div');
     hdr.className='col-title';
-    hdr.innerHTML=`${esc(col)}<span class="col-badge">${colCards.length} cartas</span>`;
+    hdr.innerHTML=`${esc(col)}<span class="col-badge">${colCards.length} cartas</span>
+      <div class="cpi-wrap" id="cs-${colIdx}">
+        <div class="cpi-bar"><div class="cpi-fill" style="width:${pctCol}%"></div></div>
+        <span class="cpi-text">${ownedCol}/${colCards.length} · ${pctCol}%</span>
+      </div>`;
     sec.appendChild(hdr);
     const grid=document.createElement('div');
     grid.className='col-grid';
@@ -444,7 +463,7 @@ function resetar(){
   inv={}; saveInv(); renderSummary(); renderGrid(); updateTradeBadge();
 }
 
-window.changeQty=changeQty; window.changeFoil=changeFoil;
+window.changeQty=changeQty; window.changeFoil=changeFoil; window.renderAllColStats=renderAllColStats;
 window.toggleTroca=toggleTroca; window.changeTroca=changeTroca;
 window.setTab=setTab; window.resetar=resetar;
 window.toggleTradePanel=toggleTradePanel; window.copiarLista=copiarLista; window.limparTrocas=limparTrocas;
