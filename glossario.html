@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glossário — Lendas & Batalhas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+:root{--bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;--line:#2c2f6b;--text:#ece3d0;--muted:#9698c4;--gold:#bea356;--red:#b14a3c}
+body{background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans-serif;height:100vh;height:100dvh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2c2f6b;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+button{cursor:pointer;font-family:inherit}
+
+#header{flex:none;display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid var(--line);background:#0e0f37}
+#logo{display:flex;align-items:center;gap:11px;cursor:pointer;text-decoration:none;border:none;background:none}
+#logo-icon{width:38px;height:38px;object-fit:contain;flex:none}
+.logo-game{font-family:'Cinzel',serif;font-weight:700;font-size:15px;letter-spacing:.05em;color:#bea356}
+.logo-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text)}
+.btn-voltar{margin-left:auto;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 13px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+.btn-voltar:hover{color:var(--text)}
+
+#page{flex:1;overflow-y:auto}
+.inner{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+.page-title{font-family:'Cinzel',serif;font-weight:700;font-size:26px;color:var(--gold);margin-bottom:6px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+
+#search-bar{display:flex;gap:10px;margin-bottom:24px}
+#search-in{flex:1;background:var(--bg3);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px 14px;font-size:15px;font-family:inherit;outline:none}
+#search-in:focus{border-color:var(--gold)}
+#kw-count{align-self:center;font-size:13px;color:var(--muted);white-space:nowrap}
+
+#kw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.kw-card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:border-color .15s}
+.kw-card:hover{border-color:var(--gold)}
+.kw-name{font-family:'Cinzel',serif;font-weight:700;font-size:16px;color:var(--gold);margin-bottom:6px;letter-spacing:.04em}
+.kw-desc{font-size:13px;color:var(--text);line-height:1.55;margin-bottom:10px}
+.kw-cartas-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.kw-cartas{display:flex;flex-wrap:wrap;gap:4px}
+.kw-carta-chip{font-size:11px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--text)}
+
+#loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 0}
+
+@media(max-width:600px){
+  #header{padding:9px 12px;gap:8px}
+  .inner{padding:18px 14px 50px}
+  .page-title{font-size:21px}
+  #kw-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header id="header">
+  <a href="./index.html" id="logo">
+    <img id="logo-icon" src="./Logo.png" alt="L&B" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex'">
+    <div id="logo-fb" style="display:none;width:38px;height:38px;border-radius:8px;background:linear-gradient(145deg,#bea356,#b14a3c);align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:#1a130a;flex:none">L&B</div>
+    <div style="text-align:left">
+      <div class="logo-game">LENDAS &amp; BATALHAS</div>
+      <div class="logo-sub">Ferramentas</div>
+    </div>
+  </a>
+  <a href="./index.html" class="btn-voltar">← Ferramentas</a>
+</header>
+
+<div id="loading">Carregando glossário…</div>
+
+<div id="page" style="display:none">
+  <div class="inner">
+    <div class="page-title">Glossário</div>
+    <div class="page-sub">Todas as keywords do jogo e seus significados.</div>
+    <div id="search-bar">
+      <input id="search-in" placeholder="Buscar keyword…" oninput="filtrar()">
+      <span id="kw-count"></span>
+    </div>
+    <div id="kw-grid"></div>
+  </div>
+</div>
+
+<script type="module">
+const CACHE_KEY='lb_api_v1';
+
+async function fetchApi(urls){
+  for(const url of urls){
+    try{
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(),12000);
+      const r=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(t);
+      if(!r.ok) continue;
+      return await r.json();
+    }catch(e){}
+  }
+  return null;
+}
+
+async function fetchCartas(){
+  const data=await fetchApi([
+    'https://lendasebatalhas.com.br/wp-json/lendas/v1/cartas',
+    'https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas',
+  ]);
+  if(data){
+    try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data})); }catch(e){}
+    return data;
+  }
+  try{ const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(c?.data) return c.data; }catch(e){}
+  throw new Error('API indisponível');
+}
+
+async function fetchGlossario(){
+  // Tenta endpoint dedicado de efeitos primeiro
+  const data=await fetchApi([
+    'https://lendasebatalhas.com.br/wp-json/lendas/v1/efeitos',
+    'https://www.lendasebatalhas.com.br/wp-json/lendas/v1/efeitos',
+    'https://lendasebatalhas.com.br/wp-json/wp/v2/efeito?per_page=100',
+    'https://www.lendasebatalhas.com.br/wp-json/wp/v2/efeito?per_page=100',
+  ]);
+  return data; // null se nenhum endpoint respondeu
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+let allKw=[];
+
+async function init(){
+  let cartas, glossData;
+  try{ [cartas, glossData]=await Promise.all([fetchCartas(), fetchGlossario()]); }
+  catch(e){
+    document.getElementById('loading').innerHTML='<span style="color:#d98a7e">Erro ao carregar. Verifique sua conexão.</span>';
+    return;
+  }
+
+  // Monta mapa de keywords: slug → {name, descricao, cartas[]}
+  const kwMap={};
+
+  // 1. Extrai de effect_blocks de todas as cartas
+  cartas.forEach(c=>{
+    (c.effect_blocks||[]).forEach(b=>{
+      (b.actions||[]).forEach(a=>{
+        (a.effect_reference||[]).forEach(r=>{
+          if(!r.name) return;
+          const key=r.slug||r.name.toLowerCase();
+          if(!kwMap[key]) kwMap[key]={name:r.name.toUpperCase(), slug:key, descricao:'', cartas:[]};
+          const nome=c.nome||'';
+          if(nome&&!kwMap[key].cartas.includes(nome)) kwMap[key].cartas.push(nome);
+        });
+      });
+    });
+  });
+
+  // 2. Enriquece com descrições do endpoint de glossário (se disponível)
+  if(glossData && Array.isArray(glossData)){
+    glossData.forEach(g=>{
+      const nome=(g.name||g.nome||'').toUpperCase();
+      const slug=g.slug||nome.toLowerCase();
+      const desc=g.description||g.descricao||g.content?.rendered||'';
+      // Tenta casar por slug ou nome
+      const found=kwMap[slug]||Object.values(kwMap).find(k=>k.name===nome);
+      if(found){
+        if(desc) found.descricao=desc.replace(/<[^>]+>/g,'').trim();
+      } else if(nome){
+        kwMap[slug]={name:nome, slug, descricao:desc.replace(/<[^>]+>/g,'').trim(), cartas:[]};
+      }
+    });
+  }
+
+  allKw=Object.values(kwMap).sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('page').style.display='';
+  filtrar();
+}
+
+function filtrar(){
+  const q=(document.getElementById('search-in').value||'').toLowerCase().trim();
+  const vis=q?allKw.filter(k=>k.name.toLowerCase().includes(q)||k.descricao.toLowerCase().includes(q)):allKw;
+  document.getElementById('kw-count').textContent=vis.length+' keywords';
+  document.getElementById('kw-grid').innerHTML=vis.length
+    ? vis.map(k=>`
+      <div class="kw-card">
+        <div class="kw-name">${esc(k.name)}</div>
+        ${k.descricao?`<div class="kw-desc">${esc(k.descricao)}</div>`:''}
+        ${k.cartas.length?`
+          <div class="kw-cartas-lbl">Cartas com esta keyword</div>
+          <div class="kw-cartas">${k.cartas.map(n=>`<span class="kw-carta-chip">${esc(n)}</span>`).join('')}</div>
+        `:''}
+      </div>`).join('')
+    : '<div class="empty">Nenhuma keyword encontrada.</div>';
+}
+
+window.filtrar=filtrar;
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventário — Lendas & Batalhas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+:root{--bg:#0b0c2e;--bg2:#121342;--bg3:#1b1d54;--line:#2c2f6b;--text:#ece3d0;--muted:#9698c4;--gold:#bea356;--red:#b14a3c}
+body{background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans-serif;height:100vh;height:100dvh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2c2f6b;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+button{cursor:pointer;font-family:inherit}
+
+#header{flex:none;display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid var(--line);background:#0e0f37}
+#logo{display:flex;align-items:center;gap:11px;text-decoration:none}
+#logo-icon{width:38px;height:38px;object-fit:contain;flex:none}
+.logo-game{font-family:'Cinzel',serif;font-weight:700;font-size:15px;letter-spacing:.05em;color:#bea356}
+.logo-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text)}
+.btn-voltar{margin-left:auto;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 13px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+
+/* Progress bar */
+#summary{flex:none;background:var(--bg2);border-bottom:1px solid var(--line);padding:10px 20px;display:none;gap:16px;flex-wrap:wrap}
+.col-progress{flex:1;min-width:200px}
+.cp-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.cp-name{font-family:'Cinzel',serif;font-size:12px;font-weight:600;color:var(--gold)}
+.cp-stat{font-size:11px;color:var(--muted)}
+.cp-bar{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.cp-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .3s}
+
+/* Tabs */
+#tabs{flex:none;display:none;background:var(--bg2);border-bottom:1px solid var(--line)}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:600;padding:10px 18px;letter-spacing:.02em}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+#page{flex:1;overflow-y:auto;padding:16px}
+.col-section{margin-bottom:32px}
+.col-title{font-family:'Cinzel',serif;font-weight:700;font-size:18px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.col-badge{font-size:11px;font-weight:600;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:2px 9px;color:var(--muted)}
+
+#inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.inv-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:border-color .15s}
+.inv-card.owned{border-color:rgba(190,163,86,.4)}
+.inv-card.foil{border-color:var(--gold);box-shadow:0 0 8px rgba(190,163,86,.2)}
+.inv-img{width:100%;height:182px;object-fit:cover;display:block;background:var(--bg3)}
+.inv-ph{width:100%;height:182px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;color:var(--muted);padding:8px;background:var(--bg3)}
+.inv-bottom{padding:6px 8px 8px}
+.inv-nome{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.qty-row{display:flex;gap:3px;margin-bottom:5px}
+.qty-btn{flex:1;border:1px solid var(--line);background:var(--bg3);color:var(--muted);border-radius:5px;font-size:11px;font-weight:700;padding:4px 0;transition:background .1s,color .1s}
+.qty-btn.sel{background:var(--gold);color:#1a130a;border-color:var(--gold)}
+.foil-btn{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--muted);border-radius:5px;font-size:11px;font-weight:700;padding:4px;letter-spacing:.04em;transition:background .1s,color .1s}
+.foil-btn.sel{background:rgba(190,163,86,.15);color:var(--gold);border-color:var(--gold)}
+
+/* Missing tab */
+#missing-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.miss-item{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.miss-num{font-size:10px;color:var(--muted);flex:none;width:44px}
+.miss-nome{font-size:12px;font-weight:600}
+.miss-col{font-size:10px;color:var(--muted)}
+
+#btn-reset{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;margin:20px 0}
+#btn-reset:hover{color:var(--red);border-color:var(--red)}
+
+#loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 0}
+
+@media(max-width:600px){
+  #header{padding:9px 12px;gap:8px}
+  #summary{padding:8px 12px}
+  #page{padding:10px}
+  #inv-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+  .inv-img,.inv-ph{height:154px}
+}
+</style>
+</head>
+<body>
+
+<header id="header">
+  <a href="./index.html" id="logo">
+    <img id="logo-icon" src="./Logo.png" alt="L&B" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex'">
+    <div id="logo-fb" style="display:none;width:38px;height:38px;border-radius:8px;background:linear-gradient(145deg,#bea356,#b14a3c);align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:#1a130a;flex:none">L&B</div>
+    <div style="text-align:left">
+      <div class="logo-game">LENDAS &amp; BATALHAS</div>
+      <div class="logo-sub">Ferramentas</div>
+    </div>
+  </a>
+  <a href="./index.html" class="btn-voltar">← Ferramentas</a>
+</header>
+
+<div id="loading">Carregando catálogo…</div>
+
+<!-- Progress por coleção -->
+<div id="summary"></div>
+
+<!-- Tabs -->
+<div id="tabs">
+  <button class="tab-btn active" onclick="setTab(0)">Coleções</button>
+  <button class="tab-btn" onclick="setTab(1)">Faltando</button>
+</div>
+
+<div id="page" style="display:none">
+  <div id="view-colecoes">
+    <div id="inv-grid"></div>
+    <button id="btn-reset" onclick="resetar()">Resetar inventário</button>
+  </div>
+  <div id="view-faltando" style="display:none">
+    <div id="missing-list"></div>
+  </div>
+</div>
+
+<script type="module">
+const CACHE_KEY='lb_api_v1';
+const INV_KEY='lb_inv_v1';
+const EXP_INFO={'DESCOBRIMENTO':{total:60,col:'01'},'EXPEDIÇÕES SECRETAS':{total:62,col:'02'}};
+const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Planta':'e'};
+const CAT_MAP={'Folclórica':'Folclóricos','Histórica':'Históricos','Apoio':'Apoios','Fera':'Feras','Planta':'Plantas'};
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function saveInv(){ try{ localStorage.setItem(INV_KEY,JSON.stringify(inv)); }catch(e){} }
+
+async function fetchCartas(){
+  for(const url of['https://lendasebatalhas.com.br/wp-json/lendas/v1/cartas','https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas']){
+    try{
+      const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),12000);
+      const r=await fetch(url,{signal:ctrl.signal}); clearTimeout(t);
+      if(!r.ok) continue;
+      const data=await r.json();
+      try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data})); }catch(e){}
+      return data;
+    }catch(e){}
+  }
+  try{ const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(c?.data) return c.data; }catch(e){}
+  throw new Error('API indisponível');
+}
+
+function mapCard(c){
+  const expName=(c.expansao?.nome||'').toUpperCase();
+  const info=EXP_INFO[expName];
+  const n=String(c.numero_id||0).padStart(3,'0');
+  return{
+    id:c.wp_id, nome:c.nome||'', tipo:TIPO_MAP[c.tipo]||'b',
+    categoria:CAT_MAP[c.tipo]||c.tipo||'', raridade:c.raridade||'', colecao:expName,
+    numero_id:c.numero_id, num:info?`${n}/${info.total}-${info.col}`:n,
+    imagem_url:c.imagem_url||'',
+  };
+}
+
+let cards=[], cols=[], inv={}, curTab=0;
+
+function getInv(id){ return inv[id]||(inv[id]={qty:0,foil:false}); }
+
+function setQty(id,qty){
+  getInv(id).qty=qty;
+  saveInv();
+  renderSummary();
+  renderCard(id);
+}
+
+function toggleFoil(id){
+  const e=getInv(id);
+  e.foil=!e.foil;
+  saveInv();
+  renderCard(id);
+}
+
+function renderCard(id){
+  const el=document.getElementById('inv-'+id); if(!el) return;
+  const c=cards.find(x=>x.id===id); if(!c) return;
+  const {qty,foil}=getInv(id);
+  el.className='inv-card'+(qty>0?' owned':'')+(foil?' foil':'');
+  el.querySelector('.qty-row').innerHTML=[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${id},${n})">${n}</button>`).join('');
+  el.querySelector('.foil-btn').className='foil-btn'+(foil?' sel':'');
+}
+
+function renderSummary(){
+  const summaryEl=document.getElementById('summary');
+  summaryEl.innerHTML=cols.map(col=>{
+    const colCards=cards.filter(c=>c.colecao===col);
+    const owned=colCards.filter(c=>getInv(c.id).qty>0).length;
+    const foils=colCards.filter(c=>getInv(c.id).foil).length;
+    const pct=colCards.length?Math.round(owned/colCards.length*100):0;
+    return `<div class="col-progress">
+      <div class="cp-header">
+        <span class="cp-name">${esc(col)}</span>
+        <span class="cp-stat">${owned}/${colCards.length} · ${foils} foil${foils!==1?'s':''} · ${pct}%</span>
+      </div>
+      <div class="cp-bar"><div class="cp-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderGrid(){
+  document.getElementById('inv-grid').innerHTML=cols.map(col=>{
+    const colCards=cards.filter(c=>c.colecao===col);
+    return `<div class="col-section">
+      <div class="col-title">${esc(col)}<span class="col-badge">${colCards.length} cartas</span></div>
+      ${colCards.map(c=>{
+        const {qty,foil}=getInv(c.id);
+        return `<div class="inv-card${qty>0?' owned':''}${foil?' foil':''}" id="inv-${c.id}">
+          ${c.imagem_url
+            ?`<img class="inv-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" loading="lazy" referrerpolicy="no-referrer">`
+            :`<div class="inv-ph">${esc(c.nome)}<br><span style="font-size:9px">Nº ${esc(c.num)}</span></div>`}
+          <div class="inv-bottom">
+            <div class="inv-nome" title="${esc(c.nome)}">${esc(c.nome)}</div>
+            <div class="qty-row">
+              ${[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${c.id},${n})">${n}</button>`).join('')}
+            </div>
+            <button class="foil-btn${foil?' sel':''}" onclick="toggleFoil(${c.id})">✦ Foil</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  // Wrap card grid inside col-sections
+  const colSections=document.querySelectorAll('.col-section');
+  const gridEl=document.getElementById('inv-grid');
+  gridEl.innerHTML='';
+  cols.forEach(col=>{
+    const colCards=cards.filter(c=>c.colecao===col);
+    const sec=document.createElement('div');
+    sec.className='col-section';
+    sec.innerHTML=`<div class="col-title">${esc(col)}<span class="col-badge">${colCards.length} cartas</span></div>`;
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:24px';
+    colCards.forEach(c=>{
+      const {qty,foil}=getInv(c.id);
+      const div=document.createElement('div');
+      div.id='inv-'+c.id;
+      div.className='inv-card'+(qty>0?' owned':'')+(foil?' foil':'');
+      div.innerHTML=`${c.imagem_url
+        ?`<img class="inv-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" loading="lazy" referrerpolicy="no-referrer">`
+        :`<div class="inv-ph">${esc(c.nome)}<br><span style="font-size:9px">Nº ${esc(c.num)}</span></div>`}
+        <div class="inv-bottom">
+          <div class="inv-nome" title="${esc(c.nome)}">${esc(c.nome)}</div>
+          <div class="qty-row">${[0,1,2,3,4].map(n=>`<button class="qty-btn${qty===n?' sel':''}" onclick="setQty(${c.id},${n})">${n}</button>`).join('')}</div>
+          <button class="foil-btn${foil?' sel':''}" onclick="toggleFoil(${c.id})">✦ Foil</button>
+        </div>`;
+      grid.appendChild(div);
+    });
+    sec.appendChild(grid);
+    gridEl.appendChild(sec);
+  });
+}
+
+function renderMissing(){
+  const missing=cards.filter(c=>getInv(c.id).qty===0);
+  document.getElementById('missing-list').innerHTML=missing.length
+    ?missing.map(c=>`<div class="miss-item">
+        <div>
+          <div class="miss-num">${esc(c.num)}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:1px">${esc(c.raridade)}</div>
+        </div>
+        <div>
+          <div class="miss-nome">${esc(c.nome)}</div>
+          <div class="miss-col">${esc(c.colecao)}</div>
+        </div>
+      </div>`).join('')
+    :'<div class="empty">🎉 Coleção completa! Você tem todas as cartas.</div>';
+}
+
+function setTab(n){
+  curTab=n;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+  document.getElementById('view-colecoes').style.display=n===0?'':'none';
+  document.getElementById('view-faltando').style.display=n===1?'':'none';
+  if(n===1) renderMissing();
+}
+
+function resetar(){
+  if(!confirm('Resetar todo o inventário? Esta ação não pode ser desfeita.')) return;
+  inv={};
+  saveInv();
+  renderSummary();
+  renderGrid();
+}
+
+window.setQty=setQty; window.toggleFoil=toggleFoil; window.setTab=setTab; window.resetar=resetar;
+
+async function init(){
+  let apiData;
+  try{ apiData=await fetchCartas(); }
+  catch(e){
+    document.getElementById('loading').innerHTML='<span style="color:#d98a7e">Erro ao carregar. Verifique sua conexão.</span>';
+    return;
+  }
+
+  cards=apiData.map(mapCard)
+    .sort((a,b)=>(a.colecao||'').localeCompare(b.colecao||'')||a.numero_id-b.numero_id);
+
+  const seen=new Set();
+  cols=[];
+  cards.forEach(c=>{ if(c.colecao&&!seen.has(c.colecao)){seen.add(c.colecao);cols.push(c.colecao);} });
+
+  // Load saved inventory
+  try{ const saved=localStorage.getItem(INV_KEY); if(saved) inv=JSON.parse(saved); }catch(e){}
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('summary').style.display='flex';
+  document.getElementById('tabs').style.display='';
+  document.getElementById('page').style.display='';
+
+  renderSummary();
+  renderGrid();
+}
+
+init();
+</script>
+</body>
+</html>
