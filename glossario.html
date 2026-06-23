@@ -41,6 +41,9 @@ button{cursor:pointer;font-family:inherit}
 .kw-cartas-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .kw-cartas{display:flex;flex-wrap:wrap;gap:4px}
 .kw-carta-chip{font-size:11px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--text)}
+.kw-tipo{display:inline-block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-bottom:7px;font-weight:600}
+.kw-tipo-efeito{background:rgba(190,163,86,.15);color:var(--gold);border:1px solid rgba(190,163,86,.3)}
+.kw-tipo-termo{background:rgba(150,152,196,.12);color:var(--muted);border:1px solid rgba(150,152,196,.25)}
 
 #loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 0}
@@ -112,14 +115,27 @@ async function fetchCartas(){
 }
 
 async function fetchGlossario(){
-  // Tenta endpoint dedicado de efeitos primeiro
-  const data=await fetchApi([
-    'https://lendasebatalhas.com.br/wp-json/lendas/v1/efeitos',
-    'https://www.lendasebatalhas.com.br/wp-json/lendas/v1/efeitos',
-    'https://lendasebatalhas.com.br/wp-json/wp/v2/efeito?per_page=100',
-    'https://www.lendasebatalhas.com.br/wp-json/wp/v2/efeito?per_page=100',
+  // Busca efeitos E termos em paralelo (ambos são post types no WP)
+  const base=['https://lendasebatalhas.com.br','https://www.lendasebatalhas.com.br'];
+  async function tryFetch(path){
+    for(const b of base){
+      try{
+        const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),12000);
+        const r=await fetch(b+path,{signal:ctrl.signal}); clearTimeout(t);
+        if(r.ok) return await r.json();
+      }catch(e){}
+    }
+    return [];
+  }
+  const [efeitos, termos]=await Promise.all([
+    tryFetch('/wp-json/wp/v2/efeito_glossario?per_page=100&_fields=id,slug,title,content,acf'),
+    tryFetch('/wp-json/wp/v2/termo_glossario?per_page=100&_fields=id,slug,title,content,acf'),
   ]);
-  return data; // null se nenhum endpoint respondeu
+  // Unifica: efeitos primeiro, depois termos gerais
+  return [
+    ...(efeitos||[]).map(g=>({...g, _tipo:'efeito'})),
+    ...(termos||[]).map(g=>({...g, _tipo:'termo'})),
+  ];
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -154,15 +170,17 @@ async function init(){
   // 2. Enriquece com descrições do endpoint de glossário (se disponível)
   if(glossData && Array.isArray(glossData)){
     glossData.forEach(g=>{
-      const nome=(g.name||g.nome||'').toUpperCase();
+      const nome=(g.title?.rendered||g.name||g.nome||'').replace(/<[^>]+>/g,'').trim().toUpperCase();
       const slug=g.slug||nome.toLowerCase();
-      const desc=g.description||g.descricao||g.content?.rendered||'';
+      const desc=(g.content?.rendered||g.description||g.descricao||'').replace(/<[^>]+>/g,'').trim();
+      if(!nome) return;
       // Tenta casar por slug ou nome
       const found=kwMap[slug]||Object.values(kwMap).find(k=>k.name===nome);
       if(found){
-        if(desc) found.descricao=desc.replace(/<[^>]+>/g,'').trim();
-      } else if(nome){
-        kwMap[slug]={name:nome, slug, descricao:desc.replace(/<[^>]+>/g,'').trim(), cartas:[]};
+        if(desc) found.descricao=desc;
+        found._tipo=g._tipo||found._tipo;
+      } else {
+        kwMap[slug]={name:nome, slug, descricao:desc, cartas:[], _tipo:g._tipo||'termo'};
       }
     });
   }
@@ -181,6 +199,7 @@ function filtrar(){
   document.getElementById('kw-grid').innerHTML=vis.length
     ? vis.map(k=>`
       <div class="kw-card">
+        ${k._tipo?`<span class="kw-tipo kw-tipo-${esc(k._tipo)}">${k._tipo==='efeito'?'Efeito':'Termo'}</span>`:''}
         <div class="kw-name">${esc(k.name)}</div>
         ${k.descricao?`<div class="kw-desc">${esc(k.descricao)}</div>`:''}
         ${k.cartas.length?`
