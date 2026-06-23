@@ -169,7 +169,7 @@ button{cursor:pointer;font-family:inherit}
 </div>
 
 <script type="module">
-const CACHE_KEY='lb_api_v1';
+const CACHE_KEY='lb_api_v2';
 const INV_KEY='lb_inv_v1';
 const EXP_INFO={'DESCOBRIMENTO':{total:60,col:'01'},'EXPEDIÇÕES SECRETAS':{total:62,col:'02'}};
 const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Planta':'e'};
@@ -192,7 +192,7 @@ async function fetchCartas(){
   throw new Error('API indisponível');
 }
 
-const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS'};
+const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
 function getExpansaoNome(c){
   const e=c.expansao;
   if(!e) return '';
@@ -202,7 +202,7 @@ function getExpansaoNome(c){
   const nome=o.nome||o.name||o.post_title||o.title?.rendered||o.title||'';
   if(nome.trim()) return nome.trim();
   const id=o.id||o.ID;
-  return id?(EXP_ID_MAP[id]||'ID_'+id):'';
+  return id?(EXP_ID_MAP[id]||''):'';
 }
 
 function mapCard(c){
