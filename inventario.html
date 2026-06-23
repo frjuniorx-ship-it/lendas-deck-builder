@@ -117,6 +117,24 @@ button{cursor:pointer;font-family:inherit}
 #loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 0}
 
+/* Log panel */
+#log-panel{position:fixed;top:62px;right:16px;width:280px;max-height:360px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:65;display:none;flex-direction:column;overflow:hidden}
+#log-panel.open{display:flex}
+.log-head{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex:none}
+.log-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold)}
+.log-x{background:none;border:none;color:var(--muted);font-size:20px;line-height:1;padding:0 2px}
+.log-x:hover{color:var(--text)}
+.log-items{overflow-y:auto;flex:1}
+.log-entry{padding:8px 14px;border-bottom:1px solid var(--line);font-size:12px;display:flex;align-items:center;gap:8px}
+.log-entry:last-child{border-bottom:none}
+.log-sign{font-weight:700;font-size:13px;min-width:22px;flex:none}
+.log-sign.add{color:#5aa06f}
+.log-sign.rem{color:#d98a7e}
+.log-card-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-empty{text-align:center;color:var(--muted);font-size:12px;padding:24px 12px;line-height:1.6}
+.btn-log{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600}
+.btn-log.has-log{color:var(--text);border-color:rgba(190,163,86,.5)}
+
 @media(max-width:600px){
   #header{padding:9px 12px;gap:8px}
   #summary{padding:10px 12px}
@@ -140,6 +158,7 @@ button{cursor:pointer;font-family:inherit}
     </div>
   </a>
   <button id="btn-trocas" onclick="toggleTradePanel()">⇄ Trocas <span id="trade-badge">0</span></button>
+  <button class="btn-log" id="btn-log" onclick="toggleLog()">Últimas ações</button>
   <a href="./index.html" class="btn-voltar">← Ferramentas</a>
 </header>
 
@@ -158,6 +177,14 @@ button{cursor:pointer;font-family:inherit}
   <div id="view-faltando" style="display:none">
     <div id="missing-list"></div>
   </div>
+</div>
+
+<div id="log-panel">
+  <div class="log-head">
+    <span class="log-title">Últimas ações</span>
+    <button class="log-x" onclick="toggleLog()">×</button>
+  </div>
+  <div class="log-items" id="log-items"></div>
 </div>
 
 <div id="trade-overlay" onclick="toggleTradePanel()"></div>
@@ -182,6 +209,34 @@ const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Plant
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function saveInv(){ try{ localStorage.setItem(INV_KEY,JSON.stringify(inv)); }catch(e){} }
+
+const actionLog=[];
+function pushLog(sign,nome,tipo){
+  actionLog.unshift({sign,nome,tipo:tipo||''});
+  if(actionLog.length>15) actionLog.length=15;
+  document.getElementById('btn-log')?.classList.add('has-log');
+  renderLogItems();
+}
+function renderLogItems(){
+  const el=document.getElementById('log-items'); if(!el) return;
+  el.innerHTML=actionLog.length
+    ?actionLog.map(e=>`<div class="log-entry">
+        <span class="log-sign ${e.sign==='+'?'add':'rem'}">${e.sign}1</span>
+        <span class="log-card-name">${e.tipo?esc(e.tipo)+' — ':''}${esc(e.nome)}</span>
+      </div>`).join('')
+    :'<div class="log-empty">Nenhuma ação ainda.<br>Altere quantidades para registrar.</div>';
+}
+function toggleLog(){
+  const panel=document.getElementById('log-panel');
+  const isOpen=panel.classList.toggle('open');
+  if(isOpen) renderLogItems();
+}
+window.toggleLog=toggleLog;
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('log-panel'),btn=document.getElementById('btn-log');
+  if(panel?.classList.contains('open')&&!panel.contains(e.target)&&!btn?.contains(e.target))
+    panel.classList.remove('open');
+});
 
 async function fetchCartas(){
   for(const url of['https://lendasebatalhas.com.br/wp-json/lendas/v1/cartas','https://www.lendasebatalhas.com.br/wp-json/lendas/v1/cartas']){
@@ -235,17 +290,21 @@ function getInv(id){
 
 function changeQty(id, delta){
   const e=getInv(id);
+  const oldQty=e.qty;
   e.qty=Math.max(0,e.qty+delta);
   if(e.foil>e.qty) e.foil=e.qty;
   if(e.troca>e.qty) e.troca=e.qty;
   if(e.qty===0){ e.foil=0; e.troca=0; }
+  if(e.qty!==oldQty){ const c=cards.find(x=>x.id===id); pushLog(delta>0?'+':'−',c?.nome||'?','cópia'); }
   saveInv(); renderSummary(); renderAllColStats(); renderCardEl(id); updateTradeBadge();
   if(document.getElementById('trade-panel').classList.contains('open')) renderTradePanel();
 }
 
 function changeFoil(id, delta){
   const e=getInv(id);
+  const oldFoil=e.foil;
   e.foil=Math.max(0,Math.min(e.qty,e.foil+delta));
+  if(e.foil!==oldFoil){ const c=cards.find(x=>x.id===id); pushLog(delta>0?'+':'−',c?.nome||'?','foil'); }
   saveInv(); renderCardEl(id);
 }
 

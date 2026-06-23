@@ -183,6 +183,24 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 .type-name{font-size:9px;color:var(--muted);width:52px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .type-cnt{font-size:9px;color:var(--muted);width:18px;text-align:right;flex:none}
 
+/* ── Log panel ── */
+#log-panel{position:fixed;top:108px;right:16px;width:300px;max-height:380px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:70;display:none;flex-direction:column;overflow:hidden}
+#log-panel.open{display:flex}
+.log-head{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex:none}
+.log-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold)}
+.log-x{background:none;border:none;color:var(--muted);font-size:20px;line-height:1;padding:0 2px}
+.log-x:hover{color:var(--text)}
+.log-items{overflow-y:auto;flex:1}
+.log-entry{padding:8px 14px;border-bottom:1px solid var(--line);font-size:12px;display:flex;align-items:center;gap:10px}
+.log-entry:last-child{border-bottom:none}
+.log-sign{font-family:'Cinzel',serif;font-weight:700;font-size:13px;min-width:26px;flex:none}
+.log-sign.add{color:#5aa06f}
+.log-sign.rem{color:#d98a7e}
+.log-card-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-empty{text-align:center;color:var(--muted);font-size:12px;padding:24px 12px;line-height:1.6}
+.btn-log{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-weight:600;font-size:12px}
+.btn-log.has-log{color:var(--text);border-color:rgba(190,163,86,.5)}
+
 /* ── Filter toggle (mobile) ── */
 #filter-toggle{display:none;width:100%;background:var(--bg2);border:none;border-bottom:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:12px;font-weight:600;padding:9px 14px;text-align:left;cursor:pointer}
 #filter-body{transition:none}
@@ -291,6 +309,7 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
       <input id="deck-name-in" type="text" placeholder="Nome do baralho" oninput="app.rename(this.value)">
       <button id="btn-fav-cur" onclick="app.toggleFav()">☆</button>
       <div class="bld-sp"></div>
+      <button class="btn-log" id="btn-log" onclick="app.toggleLog()">Últimas ações</button>
       <button class="btn-exp" onclick="app.openExport()">Exportar</button>
       <button class="btn-imp" onclick="app.openImport()">Importar</button>
       <button class="btn-del-deck" onclick="app.delCur()">Excluir</button>
@@ -370,6 +389,15 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
 
 </div>
 
+<!-- ═══════════════ LOG ═══════════════ -->
+<div id="log-panel">
+  <div class="log-head">
+    <span class="log-title">Últimas ações</span>
+    <button class="log-x" onclick="app.closeLog()">×</button>
+  </div>
+  <div class="log-items" id="log-items"></div>
+</div>
+
 <!-- ═══════════════ ZOOM ═══════════════ -->
 <div id="zoom-modal" onclick="app.closeZoom()">
   <div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center">
@@ -411,15 +439,30 @@ let s = {
   byId: {},
   decks: [],
   editingIdx: -1,
+  deletingIdx: -1,
   search: '',
   fCat: 'Todas', fRar: 'Todas', fCol: 'Todas', fPc: 'Todas',
-  modal: null,    // null | 'export' | 'import'
+  modal: null,    // null | 'export' | 'import' | 'confirm-delete'
   importText: '',
   importMsg: null,
   copied: false,
   isMobile: false,
   tab: 'catalog', // 'catalog' | 'deck'
 };
+
+const actionLog=[];
+function pushLog(sign,nome){
+  actionLog.unshift({sign,nome});
+  if(actionLog.length>15) actionLog.length=15;
+  document.getElementById('btn-log')?.classList.add('has-log');
+  renderLogItems();
+}
+function renderLogItems(){
+  const el=document.getElementById('log-items'); if(!el) return;
+  el.innerHTML=actionLog.length
+    ?actionLog.map(e=>`<div class="log-entry"><span class="log-sign ${e.sign==='+'?'add':'rem'}">${e.sign}1</span><span class="log-card-name">${esc(e.nome)}</span></div>`).join('')
+    :'<div class="log-empty">Nenhuma ação ainda.<br>Adicione ou remova cartas do baralho.</div>';
+}
 
 function setState(patch) { Object.assign(s, patch); render(); }
 
@@ -450,18 +493,22 @@ function mutateCur(fn){
 }
 
 function add(id){
+  let changed=false;
   mutateCur(d=>{
     const e=d.cards.find(c=>c.id===id);
-    if(e){ const mx=maxCopies(s.byId[id]); if(e.qty<mx) e.qty++; }
-    else d.cards.push({id,qty:1});
+    if(e){ const mx=maxCopies(s.byId[id]); if(e.qty<mx){ e.qty++; changed=true; } }
+    else{ d.cards.push({id,qty:1}); changed=true; }
   });
+  if(changed) pushLog('+', s.byId[id]?.nome||'?');
 }
 function inc(id){ add(id); }
 function dec(id){
+  let changed=false;
   mutateCur(d=>{
     const e=d.cards.find(c=>c.id===id);
-    if(e){ e.qty--; if(e.qty<=0) d.cards=d.cards.filter(c=>c.id!==id); }
+    if(e&&e.qty>0){ e.qty--; if(e.qty<=0) d.cards=d.cards.filter(c=>c.id!==id); changed=true; }
   });
+  if(changed) pushLog('−', s.byId[id]?.nome||'?');
 }
 
 function exportText(d){
@@ -800,6 +847,18 @@ function renderModal(){
   const title=document.getElementById('modal-title');
   const body=document.getElementById('modal-body');
 
+  if(s.modal==='confirm-delete'){
+    const d=s.decks[s.deletingIdx];
+    title.textContent='Excluir baralho';
+    body.innerHTML=`
+      <p style="margin-bottom:16px;line-height:1.6">Deseja excluir o baralho <b style="color:var(--text)">"${esc(d?.nome||'')}"</b>?<br><small style="color:var(--muted)">Esta ação não pode ser desfeita.</small></p>
+      <div class="mactions">
+        <button class="btn-cancel" onclick="app.closeModal()">Não</button>
+        <button class="btn-primary" style="background:#8b2a1e;border:none" onclick="app.confirmDel()">Sim, excluir</button>
+      </div>`;
+    return;
+  }
+
   if(s.modal==='export'&&cur()){
     const txt=exportText(cur());
     title.textContent='Exportar baralho';
@@ -842,10 +901,15 @@ window.app = {
   openDeck(idx){ setState({view:'builder',editingIdx:idx,tab:'catalog'}); },
 
   del(idx){
-    if(!window.confirm('Excluir este baralho? Esta ação não pode ser desfeita.')) return;
+    setState({modal:'confirm-delete', deletingIdx:idx});
+  },
+
+  confirmDel(){
+    const idx=s.deletingIdx;
+    if(idx<0) return;
     const decks=s.decks.slice(); decks.splice(idx,1);
     persist(decks);
-    setState({decks,view:'home',editingIdx:-1,modal:null});
+    setState({decks, view:idx===s.editingIdx?'home':s.view, editingIdx:-1, modal:null, deletingIdx:-1});
   },
 
   delCur(){ if(s.editingIdx>=0) this.del(s.editingIdx); },
@@ -920,12 +984,24 @@ window.app = {
     try{ navigator.clipboard.writeText(exportText(cur())).then(()=>setState({copied:true})); }
     catch(e){ const ta=document.getElementById('export-ta'); if(ta){ta.select();document.execCommand('copy');} setState({copied:true}); }
   },
+
+  toggleLog(){
+    const panel=document.getElementById('log-panel');
+    const isOpen=panel.classList.toggle('open');
+    if(isOpen) renderLogItems();
+  },
+  closeLog(){ document.getElementById('log-panel').classList.remove('open'); },
 };
 
 // ── Responsive ────────────────────────────────────────────────────────────────
 let _filterInited=false;
 function checkMobile(){ const m=window.innerWidth<880; if(m!==s.isMobile) setState({isMobile:m}); }
 window.addEventListener('resize', checkMobile);
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('log-panel'),btn=document.getElementById('btn-log');
+  if(panel?.classList.contains('open')&&!panel.contains(e.target)&&!btn?.contains(e.target))
+    panel.classList.remove('open');
+});
 
 // ── API fetch com cache offline ───────────────────────────────────────────────
 const CACHE_KEY='lb_api_v2'; // v2: força refresh após correção do campo expansao.nome
