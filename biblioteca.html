@@ -65,6 +65,20 @@ select.fil:focus{border-color:var(--gold)}
 .m-efeito{font-size:13px;color:var(--text);line-height:1.55}
 .m-classes{display:flex;flex-wrap:wrap;gap:4px}
 .m-class{font-size:11px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--muted)}
+.m-modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.m-mode{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:7px 13px}
+.m-mode img{height:22px;width:22px;object-fit:contain}
+.m-mode-lbl{font-size:12px;font-weight:600;letter-spacing:.03em}
+.m-mode.espera .m-mode-lbl{color:#6fb8d4}
+.m-mode.contra .m-mode-lbl{color:#d98a7e}
+.m-mode.instant .m-mode-lbl{color:var(--gold)}
+.mode-icons{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+.mode-ic{display:inline-flex;align-items:center;gap:2px}
+.mode-ic img{height:14px;width:14px;object-fit:contain}
+.mode-ic-lbl{font-size:9px;font-weight:600;line-height:1}
+.mode-ic.espera .mode-ic-lbl{color:#6fb8d4}
+.mode-ic.contra .mode-ic-lbl{color:#d98a7e}
+.mode-ic.instant .mode-ic-lbl{color:var(--gold)}
 
 @media(max-width:700px){
   #header{padding:9px 12px;gap:8px}
@@ -144,9 +158,29 @@ async function fetchCartas(){
 function extrairKw(c, KNOWN_KW){
   const kws=new Set();
   (c.effect_blocks||[]).forEach(b=>(b.actions||[]).forEach(a=>(a.effect_reference||[]).forEach(r=>{ if(r.name) kws.add(r.name.toUpperCase()); })));
-  const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento].filter(Boolean).join(' ').toUpperCase();
+  const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao].filter(Boolean).join(' ').toUpperCase();
   KNOWN_KW.forEach(kw=>{ if(text.includes(kw)) kws.add(kw); });
   return [...kws];
+}
+
+function modeKey(m){
+  const s=(m||'').toLowerCase();
+  if(s.includes('espera')) return 'espera';
+  if(s.includes('contra')) return 'contra';
+  if(s.includes('inst')) return 'instant';
+  return '';
+}
+function modeLabel(m){
+  const k=modeKey(m);
+  return k==='espera'?'Espera':k==='contra'?'Contra-ataque':k==='instant'?'Instantâneo':(m||'');
+}
+function modeIconSm(m){
+  const k=modeKey(m); const lbl=modeLabel(m);
+  return `<span class="mode-ic ${k}" title="${esc(lbl)}"><img src="./icon-${k}.png" alt="${esc(lbl)}" onerror="this.style.display='none'"><span class="mode-ic-lbl">${esc(lbl)}</span></span>`;
+}
+function modeIconLg(m){
+  const k=modeKey(m); const lbl=modeLabel(m);
+  return `<div class="m-mode ${k}"><img src="./icon-${k}.png" alt="${esc(lbl)}" onerror="this.style.display='none'"><span class="m-mode-lbl">${esc(lbl)}</span></div>`;
 }
 
 const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
@@ -169,6 +203,17 @@ function mapCard(c, KNOWN_KW){
   const info=EXP_INFO[expName];
   const n=String(c.numero_id||0).padStart(3,'0');
   const efeito=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' ');
+
+  // Activation modes for Plantas — try ACF field, then per-block tipo
+  let activationModes=[];
+  if(c.tipo==='Planta'){
+    const raw=c.tipo_ativacao||c.modos_ativacao||c.modo_ativacao;
+    if(raw) activationModes=Array.isArray(raw)?raw.filter(Boolean):[raw].filter(Boolean);
+    if(!activationModes.length){
+      activationModes=[...new Set((c.effect_blocks||[]).map(b=>b.tipo||b.tipo_ativacao||b.modo_ativacao||'').filter(Boolean))];
+    }
+  }
+
   return{
     id:c.wp_id, nome:c.nome||'', tipo:TIPO_MAP[c.tipo]||'b', categoria:CAT_MAP[c.tipo]||c.tipo||'',
     raridade:c.raridade||'', colecao:expName, numero_id:c.numero_id,
@@ -177,6 +222,7 @@ function mapCard(c, KNOWN_KW){
     pc:pc!=null?String(pc):'--',
     classes:c.classes||c.classes_folclorica||[], mecanica:c.mecanica||[],
     keywords:extrairKw(c,KNOWN_KW), efeito, imagem_url:c.imagem_url||'',
+    activationModes,
   };
 }
 
@@ -246,7 +292,9 @@ function aplicar(){
         :`<div class="cc-ph">${esc(c.nome)}<br><span style="font-size:9px">Nº ${esc(c.num)}</span></div>`}
       <div class="cc-info">
         <div class="cc-nome" title="${esc(c.nome)}">${esc(c.nome)}</div>
-        <div class="cc-pc">${c.tipo==='a'||c.tipo==='e'?'ND '+c.pc:'PC '+c.pc}</div>
+        <div class="cc-pc">${c.tipo==='e'
+          ?`<span class="mode-icons">${c.activationModes.map(modeIconSm).join('')||(c.pc!=='--'?'ND '+c.pc:'')}</span>`
+          :c.tipo==='a'?'Descarte '+c.pc:'PC '+c.pc}</div>
       </div>
     </div>`;
   }).join('');
@@ -255,7 +303,6 @@ function aplicar(){
 function abrirModal(id){
   const c=filtered.find(x=>x.id===id); if(!c) return;
   const hasImg=!!c.imagem_url;
-  const showStats=c.tipo!=='a'&&c.tipo!=='e';
   document.getElementById('modal-inner').innerHTML=`
     ${hasImg?`<img class="m-img" src="${esc(c.imagem_url)}" alt="${esc(c.nome)}" referrerpolicy="no-referrer">`:''}
     <div class="m-body">
@@ -266,13 +313,13 @@ function abrirModal(id){
         <span class="m-tag">${esc(c.colecao)}</span>
         <span class="m-tag gold" style="border-color:${RARC[c.raridade]||'var(--line)'};color:${RARC[c.raridade]||'var(--muted)'}">${esc(c.raridade)}</span>
       </div>
-      ${showStats?`<div class="m-stats">
+      ${c.tipo!=='a'&&c.tipo!=='e'?`<div class="m-stats">
         <div class="m-stat"><div class="m-stat-lbl">PC</div><div class="m-stat-val">${esc(c.pc)}</div></div>
         <div class="m-stat"><div class="m-stat-lbl">Ataque</div><div class="m-stat-val">${esc(c.pa)}</div></div>
         <div class="m-stat"><div class="m-stat-lbl">Defesa</div><div class="m-stat-val">${esc(c.pd)}</div></div>
-      </div>`:`<div class="m-stats">
+      </div>`:c.tipo==='a'?`<div class="m-stats">
         <div class="m-stat"><div class="m-stat-lbl">Descarte</div><div class="m-stat-val">${esc(c.pc)}</div></div>
-      </div>`}
+      </div>`:c.activationModes.length?`<div class="m-modes">${c.activationModes.map(modeIconLg).join('')}</div>`:''}
       ${c.classes.length?`<div class="m-section"><div class="m-lbl">Classes</div><div class="m-classes">${c.classes.map(x=>`<span class="m-class">${esc(x)}</span>`).join('')}</div></div>`:''}
       ${c.keywords.length?`<div class="m-section"><div class="m-lbl">Keywords</div><div class="m-kws">${c.keywords.map(k=>`<span class="m-kw">${esc(k)}</span>`).join('')}</div></div>`:''}
       ${c.efeito?`<div class="m-section"><div class="m-lbl">Efeito</div><div class="m-efeito">${esc(c.efeito)}</div></div>`:''}
