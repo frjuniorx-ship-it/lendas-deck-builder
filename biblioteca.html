@@ -158,7 +158,7 @@ async function fetchCartas(){
 function extrairKw(c, KNOWN_KW){
   const kws=new Set();
   (c.effect_blocks||[]).forEach(b=>(b.actions||[]).forEach(a=>(a.effect_reference||[]).forEach(r=>{ if(r.name) kws.add(r.name.toUpperCase()); })));
-  const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao].filter(Boolean).join(' ').toUpperCase();
+  const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento].filter(Boolean).join(' ').toUpperCase();
   KNOWN_KW.forEach(kw=>{ if(text.includes(kw)) kws.add(kw); });
   return [...kws];
 }
@@ -170,10 +170,8 @@ function modeKey(m){
   if(s.includes('inst')) return 'instant';
   return '';
 }
-function modeLabel(m){
-  const k=modeKey(m);
-  return k==='espera'?'Espera':k==='contra'?'Contra-ataque':k==='instant'?'Instantâneo':(m||'');
-}
+// Use the API string directly as label (Instantânea / Espera / Contra-Ataque)
+function modeLabel(m){ return m||''; }
 function modeIconSm(m){
   const k=modeKey(m); const lbl=modeLabel(m);
   return `<span class="mode-ic ${k}" title="${esc(lbl)}"><img src="./icon-${k}.png" alt="${esc(lbl)}" onerror="this.style.display='none'"><span class="mode-ic-lbl">${esc(lbl)}</span></span>`;
@@ -202,17 +200,12 @@ function mapCard(c, KNOWN_KW){
   const expName=getExpansaoNome(c).toUpperCase().trim();
   const info=EXP_INFO[expName];
   const n=String(c.numero_id||0).padStart(3,'0');
-  const efeito=[c.instinto,c.magia,c.combo_habilidade,c.encantamento,c.ativacao].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' ');
+  const efeito=[c.instinto,c.magia,c.combo_habilidade,c.encantamento].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' ');
 
-  // Activation modes for Plantas — try ACF field, then per-block tipo
-  let activationModes=[];
-  if(c.tipo==='Planta'){
-    const raw=c.tipo_ativacao||c.modos_ativacao||c.modo_ativacao;
-    if(raw) activationModes=Array.isArray(raw)?raw.filter(Boolean):[raw].filter(Boolean);
-    if(!activationModes.length){
-      activationModes=[...new Set((c.effect_blocks||[]).map(b=>b.tipo||b.tipo_ativacao||b.modo_ativacao||'').filter(Boolean))];
-    }
-  }
+  // c.ativacao = "Instantânea" | "Espera" | "Contra-Ataque" | comma-joined combos
+  const activationModes=c.ativacao
+    ? c.ativacao.split(',').map(s=>s.trim()).filter(Boolean)
+    : [];
 
   return{
     id:c.wp_id, nome:c.nome||'', tipo:TIPO_MAP[c.tipo]||'b', categoria:CAT_MAP[c.tipo]||c.tipo||'',
