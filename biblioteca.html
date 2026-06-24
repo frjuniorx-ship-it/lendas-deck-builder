@@ -155,10 +155,28 @@ async function fetchCartas(){
   throw new Error('API indisponível');
 }
 
+// Fetches master keyword names from the glossário endpoint — fails gracefully to []
+async function fetchKwNames(){
+  const base=['https://lendasebatalhas.com.br','https://www.lendasebatalhas.com.br'];
+  for(const b of base){
+    try{
+      const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),8000);
+      const r=await fetch(b+'/wp-json/wp/v2/efeito_glossario?per_page=100&_fields=title',{signal:ctrl.signal});
+      clearTimeout(t);
+      if(r.ok){
+        const d=await r.json();
+        return (d||[]).map(g=>(g.title?.rendered||'').replace(/<[^>]+>/g,'').trim().toUpperCase().normalize('NFC')).filter(Boolean);
+      }
+    }catch(e){}
+  }
+  return [];
+}
+
 function extrairKw(c, KNOWN_KW){
   const kws=new Set();
-  (c.effect_blocks||[]).forEach(b=>(b.actions||[]).forEach(a=>(a.effect_reference||[]).forEach(r=>{ if(r.name) kws.add(r.name.toUpperCase()); })));
-  const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento].filter(Boolean).join(' ').toUpperCase();
+  (c.effect_blocks||[]).forEach(b=>(b.actions||[]).forEach(a=>(a.effect_reference||[]).forEach(r=>{ if(r.name) kws.add(r.name.toUpperCase().normalize('NFC')); })));
+  // NFC-normalize both sides so accented chars always match regardless of Unicode form
+  const text=[c.instinto,c.magia,c.combo_habilidade,c.encantamento].filter(Boolean).join(' ').toUpperCase().normalize('NFC');
   KNOWN_KW.forEach(kw=>{ if(text.includes(kw)) kws.add(kw); });
   return [...kws];
 }
@@ -222,15 +240,17 @@ function mapCard(c, KNOWN_KW){
 let cards=[], filtered=[];
 
 async function init(){
-  let apiData;
-  try{ apiData=await fetchCartas(); }
+  let apiData, kwNames;
+  try{ [apiData, kwNames]=await Promise.all([fetchCartas(), fetchKwNames()]); }
   catch(e){
     document.getElementById('loading').innerHTML='<span style="color:#d98a7e">Erro ao carregar. Verifique sua conexão.</span>';
     return;
   }
 
+  // Build keyword set from both effect_reference structured data AND the glossário master list
   const KNOWN_KW=new Set();
-  apiData.forEach(c=>(c.effect_blocks||[]).forEach(b=>(b.actions||[]).forEach(a=>(a.effect_reference||[]).forEach(r=>{ if(r.name) KNOWN_KW.add(r.name.toUpperCase()); }))));
+  apiData.forEach(c=>(c.effect_blocks||[]).forEach(b=>(b.actions||[]).forEach(a=>(a.effect_reference||[]).forEach(r=>{ if(r.name) KNOWN_KW.add(r.name.toUpperCase().normalize('NFC')); }))));
+  kwNames.forEach(n=>KNOWN_KW.add(n));
 
   cards=apiData.map(c=>mapCard(c,KNOWN_KW))
     .sort((a,b)=>CATS.indexOf(a.categoria)-CATS.indexOf(b.categoria)||(a.colecao||'').localeCompare(b.colecao||'')||(parseInt(a.num)||0)-(parseInt(b.num)||0)||a.nome.localeCompare(b.nome));
