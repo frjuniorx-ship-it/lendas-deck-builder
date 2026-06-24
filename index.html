@@ -528,11 +528,12 @@ function updateDecks(decks){
 // ── Auth & cloud sync ────────────────────────────────────────────────────────
 async function wpFetch(path, opts={}){
   const hdrs={'Content-Type':'application/json',...(opts.headers||{})};
-  if(s.token) hdrs['Authorization']='Bearer '+s.token;
+  if(window.LB_WP?.nonce) hdrs['X-WP-Nonce']=window.LB_WP.nonce;
+  else if(s.token) hdrs['Authorization']='Bearer '+s.token;
   for(const base of WP_API){
     try{
       const r=await fetch(base+path,{...opts,headers:hdrs});
-      if(r.status===401||r.status===403){ doLogout(); return null; }
+      if((r.status===401||r.status===403)&&!window.LB_WP){ doLogout(); return null; }
       if(r.ok) return await r.json();
     }catch(e){}
   }
@@ -585,6 +586,13 @@ function doLogout(){
 }
 
 async function initAuth(){
+  // Modo automático: hospedado no WP, usuário já logado no site
+  if(window.LB_WP?.id){
+    setState({user:{nome:window.LB_WP.nome,email:window.LB_WP.email}});
+    await loadServerDecks();
+    return;
+  }
+  // Modo JWT: GitHub Pages ou usuário não logado
   if(!s.token) return;
   const me=await wpFetch('/lendas/v1/me');
   if(me?.id){
@@ -1103,6 +1111,7 @@ function renderAuth(){
   const hu=document.getElementById('hdr-user');
   const la=document.getElementById('landing-auth');
   if(!hu) return;
+  const wpSession=!!window.LB_WP?.id;
   if(s.user){
     const initials=(s.user.nome||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const dotCls=s.syncing?'busy':s.syncErr?'err':'ok';
@@ -1112,8 +1121,8 @@ function renderAuth(){
         <span class="user-name">${esc(s.user.nome||'')}</span>
         <span class="sync-dot ${dotCls}"></span>
       </div>
-      <button class="btn-hdr-auth" onclick="app.logout()">Sair</button>`;
-    if(la) la.innerHTML=`<div class="landing-logged">Sincronizado como <strong>${esc(s.user.nome||'')}</strong> · <button class="btn-auth-link" onclick="app.logout()">Sair</button></div>`;
+      ${!wpSession?`<button class="btn-hdr-auth" onclick="app.logout()">Sair</button>`:''}`;
+    if(la) la.innerHTML=`<div class="landing-logged">Olá, <strong>${esc(s.user.nome||'')}</strong>!${!wpSession?` · <button class="btn-auth-link" onclick="app.logout()">Sair</button>`:''}</div>`;
   }else{
     hu.innerHTML=`<button class="btn-hdr-auth" onclick="app.openLogin()">Entrar</button>`;
     if(la) la.innerHTML=`<button class="btn-auth-link" onclick="app.openLogin()">Entrar para sincronizar baralhos</button>`;

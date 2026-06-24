@@ -48,6 +48,52 @@ add_action( 'init', function () {
     exit;
 } );
 
+/* ─── WooCommerce: aba "Meus Baralhos" na Minha Conta ─── */
+
+add_filter( 'woocommerce_account_menu_items', function ( $items ) {
+    $new = [];
+    foreach ( $items as $key => $label ) {
+        $new[ $key ] = $label;
+        if ( $key === 'dashboard' ) $new['meus-baralhos'] = 'Meus Baralhos';
+    }
+    return $new;
+} );
+
+add_action( 'init', function () {
+    add_rewrite_endpoint( 'meus-baralhos', EP_ROOT | EP_PAGES );
+}, 5 ); // prioridade 5 para registrar antes do handler OPTIONS sair com exit()
+
+add_action( 'woocommerce_account_meus-baralhos_endpoint', function () {
+    $user  = wp_get_current_user();
+    $decks = get_user_meta( $user->ID, 'lb_decks', true );
+    $count = is_array( $decks ) ? count( $decks ) : 0;
+    $url   = home_url( '/ferramentas/' );
+    ?>
+    <h2 style="font-size:22px;margin-bottom:14px">Meus Baralhos</h2>
+    <p style="margin-bottom:10px">
+        Você tem <strong><?php echo $count; ?> baralho<?php echo $count !== 1 ? 's' : ''; ?></strong>
+        salvo<?php echo $count !== 1 ? 's' : ''; ?>.
+    </p>
+    <?php if ( $count > 0 ) : ?>
+    <ul style="margin:10px 0 20px;padding-left:20px;list-style:disc">
+        <?php foreach ( array_slice( $decks, 0, 6 ) as $d ) : ?>
+        <li style="margin-bottom:5px">
+            <?php echo esc_html( $d['nome'] ?? 'Sem nome' ); ?>
+            <span style="color:#999;font-size:13px">(<?php echo count( $d['cards'] ?? [] ); ?> cartas)</span>
+        </li>
+        <?php endforeach; ?>
+        <?php if ( $count > 6 ) : ?>
+        <li style="color:#999">… e mais <?php echo $count - 6; ?></li>
+        <?php endif; ?>
+    </ul>
+    <?php endif; ?>
+    <a href="<?php echo esc_url( $url ); ?>"
+       style="display:inline-block;padding:11px 24px;background:#bea356;color:#1a130a;font-weight:700;border-radius:8px;text-decoration:none;font-size:14px">
+        Abrir Deck Builder →
+    </a>
+    <?php
+} );
+
 /* ─── Endpoints REST ─── */
 
 add_action( 'rest_api_init', function () {

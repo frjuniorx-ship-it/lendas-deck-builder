@@ -1,0 +1,2 @@
+# Prefere index.php ao index.html para injetar sessão WordPress
+DirectoryIndex index.php index.html
