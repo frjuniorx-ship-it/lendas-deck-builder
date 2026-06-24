@@ -35,8 +35,35 @@ button{cursor:pointer;font-family:inherit}
 #logo-icon{width:38px;height:38px;object-fit:contain;flex:none}
 .logo-game{font-family:'Cinzel',serif;font-weight:700;font-size:15px;letter-spacing:.05em;color:#bea356}
 .logo-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text)}
-#hdr-count{display:none;align-items:baseline;gap:6px;font-size:12px;color:var(--muted);margin-left:auto}
+#hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+#hdr-count{display:none;align-items:baseline;gap:6px;font-size:12px;color:var(--muted)}
 #hdr-count .n{font-family:'Cinzel',serif;font-size:19px;font-weight:700}
+/* ── Auth UI ── */
+#hdr-user{display:flex;align-items:center;gap:6px}
+.user-chip{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--line);border-radius:20px;padding:4px 11px 4px 6px;max-width:150px}
+.user-avatar{width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a130a;flex:none}
+.user-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync-dot{width:6px;height:6px;border-radius:50%;flex:none;margin-left:2px}
+.sync-dot.ok{background:#5aa06f}.sync-dot.err{background:#d98a7e}.sync-dot.busy{background:var(--gold);animation:sdpulse .9s infinite}
+@keyframes sdpulse{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-hdr-auth{background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:12px;font-weight:600;padding:5px 11px}
+.btn-hdr-auth:hover{color:var(--text);border-color:var(--muted)}
+.landing-auth{margin-top:2px;text-align:center}
+.btn-auth-link{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 8px}
+.btn-auth-link:hover{color:var(--gold)}
+.landing-logged{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--muted)}
+.landing-logged strong{color:var(--gold)}
+/* ── Login modal ── */
+.login-wrap{padding:20px;display:flex;flex-direction:column;gap:14px}
+.login-field{display:flex;flex-direction:column;gap:5px}
+.login-field label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.login-field input{background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px 12px;font-size:15px;font-family:inherit;outline:none}
+.login-field input:focus{border-color:var(--gold)}
+.login-err{font-size:13px;color:#d98a7e;text-align:center;min-height:16px}
+.btn-login{background:var(--gold);color:#1a130a;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:'Cinzel',serif;cursor:pointer;margin-top:2px}
+.btn-login:hover{filter:brightness(1.1)}
+.btn-login:disabled{opacity:.45;cursor:default}
+.login-note{font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
 
 /* ── Loading ── */
 #loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
@@ -266,9 +293,12 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
         <div class="logo-sub">Ferramentas</div>
       </div>
     </button>
-    <div id="hdr-count">
-      <span class="n" id="hdr-num">0</span>
-      <span>/ <span id="hdr-max">80</span> cartas</span>
+    <div id="hdr-right">
+      <div id="hdr-user"></div>
+      <div id="hdr-count">
+        <span class="n" id="hdr-num">0</span>
+        <span>/ <span id="hdr-max">80</span> cartas</span>
+      </div>
     </div>
   </header>
 
@@ -292,6 +322,7 @@ select.fsel{background:var(--bg2);color:var(--text);border:1px solid var(--line)
         <a class="btn-landing btn-landing-secondary" href="./biblioteca.html">Biblioteca</a>
         <a class="btn-landing btn-landing-secondary btn-full" href="./inventario.html">Inventário de Coleção</a>
       </div>
+      <div class="landing-auth" id="landing-auth"></div>
       <a class="landing-site-link" href="https://www.lendasebatalhas.com.br" target="_blank">Acesse o site e garanta suas cartas</a>
     </div>
   </div>
@@ -437,6 +468,8 @@ const RARC  = {Comum:'#aaaaaa',Raro:'#5fa8d3','Super raro':'#9468c4','Ultra raro
 const NC_NAMES = new Set(['Pindorama','Terra de Vera Cruz']); // limite de cópias = valor do campo pc
 let COLS  = []; // derivado da API (novas coleções aparecem automaticamente)
 const MIN=40, MAX=80, KEY='lb_decks_v2';
+const TOKEN_KEY='lb_token';
+const WP_API=['https://lendasebatalhas.com.br/wp-json','https://www.lendasebatalhas.com.br/wp-json'];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let s = {
@@ -456,6 +489,11 @@ let s = {
   copied: false,
   isMobile: false,
   tab: 'catalog', // 'catalog' | 'deck'
+  // Auth
+  user: null,
+  token: localStorage.getItem(TOKEN_KEY)||null,
+  syncing: false, syncErr: false,
+  loginBusy: false, loginErr: '',
 };
 
 const actionLog=[];
@@ -478,7 +516,84 @@ function setState(patch) { Object.assign(s, patch); render(); }
 function norm(str){ return (str||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
 function esc(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function persist(decks){ try{ localStorage.setItem(KEY, JSON.stringify(decks)); }catch(e){} }
-function updateDecks(decks){ persist(decks); setState({ decks }); }
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function updateDecks(decks){
+  decks.forEach(d=>{ if(!d.id) d.id=genId(); });
+  persist(decks);
+  setState({decks});
+  if(s.token) pushDecks(decks).catch(()=>{});
+}
+
+// ── Auth & cloud sync ────────────────────────────────────────────────────────
+async function wpFetch(path, opts={}){
+  const hdrs={'Content-Type':'application/json',...(opts.headers||{})};
+  if(s.token) hdrs['Authorization']='Bearer '+s.token;
+  for(const base of WP_API){
+    try{
+      const r=await fetch(base+path,{...opts,headers:hdrs});
+      if(r.status===401||r.status===403){ doLogout(); return null; }
+      if(r.ok) return await r.json();
+    }catch(e){}
+  }
+  return null;
+}
+
+async function loadServerDecks(){
+  setState({syncing:true,syncErr:false});
+  const decks=await wpFetch('/lendas/v1/meus-decks');
+  if(Array.isArray(decks)){
+    decks.forEach(d=>{if(!d.id)d.id=genId();});
+    persist(decks);
+    setState({decks,syncing:false});
+  }else{
+    setState({syncing:false,syncErr:true});
+  }
+}
+
+async function pushDecks(decks){
+  setState({syncing:true,syncErr:false});
+  const r=await wpFetch('/lendas/v1/meus-decks',{method:'POST',body:JSON.stringify(decks)});
+  setState({syncing:false,syncErr:!r?.ok});
+}
+
+async function doLogin(username,password){
+  setState({loginBusy:true,loginErr:''});
+  for(const base of WP_API){
+    try{
+      const r=await fetch(base+'/jwt-auth/v1/token',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,password}),
+      });
+      const d=await r.json();
+      if(r.ok&&d.token){
+        localStorage.setItem(TOKEN_KEY,d.token);
+        setState({token:d.token,user:{nome:d.user_display_name,email:d.user_email},loginBusy:false,modal:null});
+        await loadServerDecks();
+        return;
+      }
+      setState({loginBusy:false,loginErr:d.message||'Credenciais inválidas'});
+      return;
+    }catch(e){}
+  }
+  setState({loginBusy:false,loginErr:'Erro de conexão. Tente novamente.'});
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  setState({token:null,user:null,syncing:false,syncErr:false});
+}
+
+async function initAuth(){
+  if(!s.token) return;
+  const me=await wpFetch('/lendas/v1/me');
+  if(me?.id){
+    setState({user:{nome:me.nome,email:me.email}});
+    await loadServerDecks();
+  }else{
+    doLogout();
+  }
+}
 function cur(){ return s.decks[s.editingIdx]; }
 function total(d){ return (d.cards||[]).reduce((a,c)=>a+c.qty,0); }
 function maxCopies(card){
@@ -607,9 +722,10 @@ function doImport(){
   const cards=Object.keys(acc).map(id=>({id:+id,qty:acc[id]}));
   if(!cards.length){ setState({importMsg:{ok:false,text:'Nenhuma carta reconhecida. Use o formato "3x Nome da Carta".'}}); return; }
   const decks=s.decks.slice();
-  decks.push({nome:name,fav:false,isExample:false,cards});
-  persist(decks);
+  decks.push({id:genId(),nome:name,fav:false,isExample:false,cards});
   const newIdx=decks.length-1;
+  persist(decks);
+  if(s.token) pushDecks(decks).catch(()=>{});
   if(!corrections.length&&!missed.length){
     setState({decks,modal:null,view:'builder',editingIdx:newIdx,tab:'deck',importText:'',importMsg:null,pendingDeckIdx:-1});
   } else {
@@ -649,6 +765,8 @@ function render(){
   } else {
     hc.style.display='none';
   }
+
+  renderAuth();
 
   if(s.view==='home') renderHome();
   if(s.view==='builder' && cur()) renderBuilder();
@@ -941,6 +1059,28 @@ function renderModal(){
     return;
   }
 
+  if(s.modal==='login'){
+    title.textContent='Entrar na sua conta';
+    body.innerHTML=`
+      <div class="login-wrap">
+        <p class="login-note" style="margin-bottom:4px">Use o mesmo login do site <b style="color:var(--text)">lendasebatalhas.com.br</b> para sincronizar seus baralhos entre dispositivos.</p>
+        <div class="login-field">
+          <label>Usuário ou e-mail</label>
+          <input id="login-user" type="text" autocomplete="username" placeholder="seu usuário">
+        </div>
+        <div class="login-field">
+          <label>Senha</label>
+          <input id="login-pass" type="password" autocomplete="current-password" placeholder="sua senha" onkeydown="if(event.key==='Enter')app.submitLogin()">
+        </div>
+        <div class="login-err">${esc(s.loginErr)}</div>
+        <button class="btn-login" onclick="app.submitLogin()" ${s.loginBusy?'disabled':''}>
+          ${s.loginBusy?'Entrando…':'Entrar'}
+        </button>
+        <p class="login-note">Ainda não tem conta? <a href="https://www.lendasebatalhas.com.br/minha-conta" target="_blank" style="color:var(--gold)">Cadastre-se no site</a></p>
+      </div>`;
+    return;
+  }
+
   if(s.modal==='import'){
     title.textContent='Importar lista';
     const hasPending=s.pendingDeckIdx>=0;
@@ -959,6 +1099,27 @@ function renderModal(){
   }
 }
 
+function renderAuth(){
+  const hu=document.getElementById('hdr-user');
+  const la=document.getElementById('landing-auth');
+  if(!hu) return;
+  if(s.user){
+    const initials=(s.user.nome||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const dotCls=s.syncing?'busy':s.syncErr?'err':'ok';
+    hu.innerHTML=`
+      <div class="user-chip" title="${esc(s.user.email||'')}">
+        <div class="user-avatar">${esc(initials)}</div>
+        <span class="user-name">${esc(s.user.nome||'')}</span>
+        <span class="sync-dot ${dotCls}"></span>
+      </div>
+      <button class="btn-hdr-auth" onclick="app.logout()">Sair</button>`;
+    if(la) la.innerHTML=`<div class="landing-logged">Sincronizado como <strong>${esc(s.user.nome||'')}</strong> · <button class="btn-auth-link" onclick="app.logout()">Sair</button></div>`;
+  }else{
+    hu.innerHTML=`<button class="btn-hdr-auth" onclick="app.openLogin()">Entrar</button>`;
+    if(la) la.innerHTML=`<button class="btn-auth-link" onclick="app.openLogin()">Entrar para sincronizar baralhos</button>`;
+  }
+}
+
 // ── Public API (window.app) ───────────────────────────────────────────────────
 window.app = {
   goHome(){ setState({view:'landing',modal:null}); },
@@ -966,9 +1127,11 @@ window.app = {
 
   newDeck(){
     const decks=s.decks.slice();
-    decks.push({nome:'Novo Baralho',fav:false,isExample:false,cards:[]});
+    decks.push({id:genId(),nome:'Novo Baralho',fav:false,isExample:false,cards:[]});
+    const idx=decks.length-1;
     persist(decks);
-    setState({decks,view:'builder',editingIdx:decks.length-1,tab:'catalog',search:'',fCat:'Todas',fRar:'Todas',fCol:'Todas',fPc:'Todas'});
+    setState({decks,view:'builder',editingIdx:idx,tab:'catalog',search:'',fCat:'Todas',fRar:'Todas',fCol:'Todas',fPc:'Todas'});
+    if(s.token) pushDecks(decks).catch(()=>{});
   },
 
   openDeck(idx){ setState({view:'builder',editingIdx:idx,tab:'catalog'}); },
@@ -983,6 +1146,7 @@ window.app = {
     const decks=s.decks.slice(); decks.splice(idx,1);
     persist(decks);
     setState({decks, view:idx===s.editingIdx?'home':s.view, editingIdx:-1, modal:null, deletingIdx:-1});
+    if(s.token) pushDecks(decks).catch(()=>{});
   },
 
   delCur(){ if(s.editingIdx>=0) this.del(s.editingIdx); },
@@ -1068,6 +1232,15 @@ window.app = {
     if(isOpen) renderLogItems();
   },
   closeLog(){ document.getElementById('log-panel').classList.remove('open'); },
+
+  openLogin(){ setState({modal:'login',loginErr:'',loginBusy:false}); },
+  logout(){ doLogout(); },
+  submitLogin(){
+    const u=document.getElementById('login-user')?.value.trim();
+    const p=document.getElementById('login-pass')?.value;
+    if(!u||!p){ setState({loginErr:'Preencha usuário e senha.'}); return; }
+    doLogin(u,p);
+  },
 };
 
 // ── Responsive ────────────────────────────────────────────────────────────────
@@ -1237,6 +1410,7 @@ async function init(){
   }
 
   setState({loading:false,cards,byId,decks,view:'landing',isMobile:window.innerWidth<880});
+  initAuth();
 }
 
 init();
