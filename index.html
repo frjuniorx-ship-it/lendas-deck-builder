@@ -465,7 +465,7 @@ const CATS  = ['Folclóricos','Históricos','Apoios','Feras','Plantas'];
 const CATC  = {Folclóricos:'#00a2ff',Históricos:'#c2503f',Apoios:'#c79a48',Feras:'#2a2929',Plantas:'#5aa06f'};
 let   RARS  = ['Comum','Raro','Super raro','Ultra raro','Lendário'];
 const RARC  = {Comum:'#aaaaaa',Raro:'#5fa8d3','Super raro':'#9468c4','Ultra raro':'#c9863c',Lendário:'#4caf50'};
-const NC_NAMES = new Set(['Pindorama','Terra de Vera Cruz']); // limite de cópias = valor do campo pc
+const NC_LIMITS = {'Pindorama':2,'Terra de Vera Cruz':2}; // cartas territoriais: cópias fixas independente do PC
 let COLS  = []; // derivado da API (novas coleções aparecem automaticamente)
 const MIN=40, MAX=80, KEY='lb_decks_v2';
 const TOKEN_KEY='lb_token';
@@ -612,7 +612,7 @@ function cur(){ return s.decks[s.editingIdx]; }
 function total(d){ return (d.cards||[]).reduce((a,c)=>a+c.qty,0); }
 function maxCopies(card){
   if((card.efeito||'').includes('número qualquer de cópias')) return 999;
-  if(NC_NAMES.has(card.nome)) return parseInt(card.pc)||1;
+  if(NC_LIMITS[card.nome] !== undefined) return NC_LIMITS[card.nome];
   if(card.tipo==='a'||card.tipo==='e') return 3;        // Folclóricos e Plantas: sempre 3
   const pc=parseInt(card.pc)||0;
   if(pc<=3) return 4;
