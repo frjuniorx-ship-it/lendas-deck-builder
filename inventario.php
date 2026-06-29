@@ -29,15 +29,19 @@ if ( $wp_load ) {
     }
 
     $user = wp_get_current_user();
-    if ( $user->ID ) {
-        $wp_data = wp_json_encode( [
-            'id'    => $user->ID,
-            'nome'  => $user->display_name,
-            'email' => $user->user_email,
-            'nonce' => wp_create_nonce( 'wp_rest' ),
-            'api'   => rtrim( rest_url(), '/' ),
-        ] );
+    if ( ! $user->ID ) {
+        // Não logado: redireciona para login WP e volta aqui depois
+        $current_url = ( ! empty( $_SERVER['HTTPS'] ) ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        header( 'Location: ' . wp_login_url( $current_url ), true, 302 );
+        exit;
     }
+    $wp_data = wp_json_encode( [
+        'id'    => $user->ID,
+        'nome'  => $user->display_name,
+        'email' => $user->user_email,
+        'nonce' => wp_create_nonce( 'wp_rest' ),
+        'api'   => rtrim( rest_url(), '/' ),
+    ] );
 }
 
 $html   = file_get_contents( $file );
