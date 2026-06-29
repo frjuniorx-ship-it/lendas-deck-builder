@@ -510,7 +510,13 @@ function renderLogItems(){
     :'<div class="log-empty">Nenhuma ação ainda.<br>Adicione ou remova cartas do baralho.</div>';
 }
 
-function setState(patch) { Object.assign(s, patch); render(); }
+function setState(patch) {
+  const prevView = s.view;
+  Object.assign(s, patch);
+  // Push history entry when entering builder so swipe-back goes to deck list
+  if(prevView !== 'builder' && s.view === 'builder') history.pushState({lbView:'builder'}, '');
+  render();
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function norm(str){ return (str||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
@@ -1256,6 +1262,10 @@ window.app = {
 let _filterInited=false;
 function checkMobile(){ const m=window.innerWidth<880; if(m!==s.isMobile) setState({isMobile:m}); }
 window.addEventListener('resize', checkMobile);
+// Swipe-back / browser back button: go to deck list instead of exiting app
+window.addEventListener('popstate', ()=>{
+  if(s.view==='builder'){ Object.assign(s,{view:'home',modal:null}); render(); }
+});
 document.addEventListener('click',e=>{
   const panel=document.getElementById('log-panel'),btn=document.getElementById('btn-log');
   if(panel?.classList.contains('open')&&!panel.contains(e.target)&&!btn?.contains(e.target))

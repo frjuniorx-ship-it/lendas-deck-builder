@@ -106,6 +106,20 @@ add_action( 'rest_api_init', function () {
     ] );
 
     // Baralhos do usuário: GET = buscar, POST = salvar tudo de uma vez
+    // Inventário de coleção: GET = buscar, POST = salvar
+    register_rest_route( 'lendas/v1', '/meu-inventario', [
+        [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => 'lb_api_get_inventario',
+            'permission_callback' => fn() => is_user_logged_in(),
+        ],
+        [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => 'lb_api_salvar_inventario',
+            'permission_callback' => fn() => is_user_logged_in(),
+        ],
+    ] );
+
     register_rest_route( 'lendas/v1', '/meus-decks', [
         [
             'methods'             => WP_REST_Server::READABLE,
@@ -119,6 +133,29 @@ add_action( 'rest_api_init', function () {
         ],
     ] );
 } );
+
+function lb_api_get_inventario( WP_REST_Request $req ): WP_REST_Response {
+    $inv = get_user_meta( get_current_user_id(), 'lb_inventario', true );
+    return rest_ensure_response( is_array( $inv ) ? $inv : (object) [] );
+}
+
+function lb_api_salvar_inventario( WP_REST_Request $req ): WP_REST_Response|WP_Error {
+    $body = $req->get_json_params();
+    if ( ! is_array( $body ) ) {
+        return new WP_Error( 'invalid_data', 'JSON inválido', [ 'status' => 400 ] );
+    }
+    $inv = [];
+    foreach ( $body as $id => $entry ) {
+        if ( ! is_numeric( $id ) ) continue;
+        $inv[ (int) $id ] = [
+            'qty'   => min( absint( $entry['qty']   ?? 0 ), 999 ),
+            'foil'  => min( absint( $entry['foil']  ?? 0 ), 999 ),
+            'troca' => min( absint( $entry['troca'] ?? 0 ), 999 ),
+        ];
+    }
+    update_user_meta( get_current_user_id(), 'lb_inventario', $inv );
+    return rest_ensure_response( [ 'ok' => true ] );
+}
 
 function lb_api_me( WP_REST_Request $req ): WP_REST_Response {
     $u = wp_get_current_user();

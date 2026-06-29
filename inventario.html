@@ -210,12 +210,69 @@ button{cursor:pointer;font-family:inherit}
 <script type="module">
 const CACHE_KEY='lb_api_v3';
 const INV_KEY='lb_inv_v2';
+const TOKEN_KEY='lb_token';
+const WP_API=['https://lendasebatalhas.com.br/wp-json','https://www.lendasebatalhas.com.br/wp-json'];
 const EXP_ID_MAP={1:'EXPEDIÇÕES SECRETAS',2:'DESCOBRIMENTO'};
 const EXP_INFO={'DESCOBRIMENTO':{total:60,col:'01'},'EXPEDIÇÕES SECRETAS':{total:65,col:'02'}};
 const TIPO_MAP={'Folclórica':'a','Histórica':'b','Apoio':'c','Fera':'d','Planta':'e'};
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function saveInv(){ try{ localStorage.setItem(INV_KEY,JSON.stringify(inv)); }catch(e){} }
+
+// ── Cloud sync ────────────────────────────────────────────────────────────────
+let _wpAuth=null; // {type:'nonce',nonce} | {type:'bearer',token}
+let _pushTimer=null;
+
+async function wpFetch(path,opts={}){
+  if(!_wpAuth) return null;
+  const hdrs={'Content-Type':'application/json',...(opts.headers||{})};
+  if(_wpAuth.type==='nonce') hdrs['X-WP-Nonce']=_wpAuth.nonce;
+  else hdrs['Authorization']='Bearer '+_wpAuth.token;
+  for(const base of WP_API){
+    try{
+      const r=await fetch(base+path,{...opts,headers:hdrs});
+      if(r.ok) return await r.json();
+    }catch(e){}
+  }
+  return null;
+}
+
+async function loadServerInv(){
+  const data=await wpFetch('/lendas/v1/meu-inventario');
+  if(data&&typeof data==='object'&&!Array.isArray(data)){
+    inv={};
+    Object.entries(data).forEach(([id,e])=>{
+      const n=parseInt(id); if(!n) return;
+      inv[n]={qty:Math.max(0,e.qty||0),foil:Math.max(0,e.foil||0),troca:Math.max(0,e.troca||0)};
+    });
+    try{localStorage.setItem(INV_KEY,JSON.stringify(inv));}catch(e){}
+  }
+}
+
+function schedulePush(){
+  if(!_wpAuth) return;
+  clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(()=>{
+    wpFetch('/lendas/v1/meu-inventario',{method:'POST',body:JSON.stringify(inv)}).catch(()=>{});
+  },1500);
+}
+
+async function initInvAuth(){
+  if(window.LB_WP?.id&&window.LB_WP?.nonce){
+    _wpAuth={type:'nonce',nonce:window.LB_WP.nonce};
+    await loadServerInv();
+    return;
+  }
+  const tok=localStorage.getItem(TOKEN_KEY);
+  if(!tok) return;
+  _wpAuth={type:'bearer',token:tok};
+  const me=await wpFetch('/lendas/v1/me');
+  if(!me?.id) _wpAuth=null; else await loadServerInv();
+}
+
+function saveInv(){
+  try{localStorage.setItem(INV_KEY,JSON.stringify(inv));}catch(e){}
+  schedulePush();
+}
 
 const actionLog=[];
 function pushLog(sign,nome,tipo){
@@ -564,6 +621,10 @@ async function init(){
   document.getElementById('page').style.display='';
 
   renderSummary(); renderGrid(); updateTradeBadge();
+
+  // Sincroniza com servidor (sobrescreve localStorage com dados do servidor)
+  await initInvAuth();
+  if(_wpAuth){ renderSummary(); renderGrid(); updateTradeBadge(); }
 }
 
 init();

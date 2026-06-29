@@ -1,2 +1,6 @@
 # Prefere index.php ao index.html para injetar sessão WordPress
 DirectoryIndex index.php index.html
+
+# Injeta sessão WP nas outras páginas HTML
+RewriteEngine On
+RewriteRule ^(inventario|biblioteca|glossario|counter)\.html$ wp-inject.php?f=$1 [L,QSA]
