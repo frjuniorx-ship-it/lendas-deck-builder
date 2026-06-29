@@ -227,7 +227,8 @@ async function wpFetch(path,opts={}){
   const hdrs={'Content-Type':'application/json',...(opts.headers||{})};
   if(_wpAuth.type==='nonce') hdrs['X-WP-Nonce']=_wpAuth.nonce;
   else hdrs['Authorization']='Bearer '+_wpAuth.token;
-  for(const base of WP_API){
+  const bases=window.LB_WP?.api?[window.LB_WP.api]:WP_API;
+  for(const base of bases){
     try{
       const r=await fetch(base+path,{...opts,headers:hdrs});
       if(r.ok) return await r.json();

@@ -18,6 +18,16 @@ for ( $i = 0; $i < 5; $i++ ) {
 $wp_data = 'null';
 if ( $wp_load ) {
     require_once $wp_load;
+
+    // Redireciona para o domínio canônico do WordPress (ex: www) se necessário,
+    // garantindo que as chamadas de API REST fiquem same-origin.
+    $wp_host = parse_url( home_url(), PHP_URL_HOST );
+    if ( $wp_host && $_SERVER['HTTP_HOST'] !== $wp_host ) {
+        $proto = ( ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) ? 'https' : 'http';
+        header( 'Location: ' . $proto . '://' . $wp_host . $_SERVER['REQUEST_URI'], true, 301 );
+        exit;
+    }
+
     $user = wp_get_current_user();
     if ( $user->ID ) {
         $wp_data = wp_json_encode( [
@@ -25,6 +35,7 @@ if ( $wp_load ) {
             'nome'  => $user->display_name,
             'email' => $user->user_email,
             'nonce' => wp_create_nonce( 'wp_rest' ),
+            'api'   => rtrim( rest_url(), '/' ),
         ] );
     }
 }
